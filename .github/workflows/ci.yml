@@ -57,12 +57,7 @@ jobs:
         run: flutter analyze
 
       - name: Check layer boundaries
-        run: |
-          if [ -f tool/check_layer_boundaries.dart ]; then
-            dart run tool/check_layer_boundaries.dart
-          else
-            echo "tool/check_layer_boundaries.dart not yet created (skipping)"
-          fi
+        run: dart run tool/check_layer_boundaries.dart
 
       - name: Run package unit tests
         run: (cd packages/adaptive_foldable && flutter test)
