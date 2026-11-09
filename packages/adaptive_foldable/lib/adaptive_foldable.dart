@@ -1,6 +1,7 @@
 /// A design-agnostic Flutter navigation scaffold with a fold kit.
 library;
 
+export 'package:adaptive_foldable/src/signals/fake_fold_signals.dart';
 export 'package:adaptive_foldable/src/signals/fold_signals.dart'
     show FoldSignals;
 export 'package:adaptive_foldable/src/signals/signal_types.dart';
