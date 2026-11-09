@@ -1,0 +1,15 @@
+name: adaptive_foldable_workspace
+description: Root workspace for adaptive_foldable.
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+workspace:
+  - packages/adaptive_foldable
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
