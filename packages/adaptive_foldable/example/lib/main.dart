@@ -20,32 +20,56 @@ class MyApp extends StatelessWidget {
 }
 
 /// Example home page displaying resolved platform signals.
-class ExampleHomePage extends StatelessWidget {
+class ExampleHomePage extends StatefulWidget {
   /// Creates an instance of [ExampleHomePage].
   const ExampleHomePage({super.key});
+
+  @override
+  State<ExampleHomePage> createState() => _ExampleHomePageState();
+}
+
+class _ExampleHomePageState extends State<ExampleHomePage> {
+  bool _overlayEnabled = true;
 
   @override
   Widget build(BuildContext context) {
     final signals = FoldSignals.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Adaptive Foldable Example')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Adaptive Foldable: $adaptiveFoldableVersion'),
-            const SizedBox(height: 16),
-            Text('Horizontal Size: ${signals.horizontalSizeClass.name}'),
-            Text('Vertical Size: ${signals.verticalSizeClass.name}'),
-            Text('Bar Edge: ${signals.verticalBarEdge?.name ?? "none"}'),
-            Text('Posture: ${signals.posture.name}'),
-            Text('Active Folds: ${signals.activeFolds.length}'),
-            Text('Occlusions: ${signals.occlusions.length}'),
-            Text('SDK 27.1: ${signals.sdk271}'),
-            Text('Available: ${signals.isAvailable}'),
+    return FoldDebugOverlay(
+      enabled: _overlayEnabled,
+      ruleLabel: 'M0SignalsDemo',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Adaptive Foldable Example'),
+          actions: [
+            IconButton(
+              icon: Icon(_overlayEnabled ? Icons.layers : Icons.layers_clear),
+              tooltip: 'Toggle Debug Overlay',
+              onPressed: () {
+                setState(() {
+                  _overlayEnabled = !_overlayEnabled;
+                });
+              },
+            ),
           ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Adaptive Foldable: $adaptiveFoldableVersion'),
+              const SizedBox(height: 16),
+              Text('Horizontal Size: ${signals.horizontalSizeClass.name}'),
+              Text('Vertical Size: ${signals.verticalSizeClass.name}'),
+              Text('Bar Edge: ${signals.verticalBarEdge?.name ?? "none"}'),
+              Text('Posture: ${signals.posture.name}'),
+              Text('Active Folds: ${signals.activeFolds.length}'),
+              Text('Occlusions: ${signals.occlusions.length}'),
+              Text('SDK 27.1: ${signals.sdk271}'),
+              Text('Available: ${signals.isAvailable}'),
+            ],
+          ),
         ),
       ),
     );
