@@ -5,6 +5,34 @@ import 'package:flutter/foundation.dart';
 
 /// The interface through which all higher layers access platform and foldable device signals.
 abstract interface class FoldSignals implements Listenable {
+  /// Internal hook connecting [of] to the UI scope without importing widgets in pure layers.
+  static Object? Function(Object context)? signalsOfHook;
+
+  /// Internal hook connecting [maybeOf] to the UI scope without importing widgets in pure layers.
+  static Object? Function(Object context)? signalsMaybeOfHook;
+
+  /// Returns the nearest [FoldSignals] found in [context].
+  ///
+  /// Throws an [AssertionError] if no [FoldSignalsScope] is found in the widget tree.
+  static FoldSignals of(dynamic context) {
+    final hook = signalsOfHook;
+    if (hook != null) {
+      return hook(context as Object) as FoldSignals;
+    }
+    throw UnsupportedError(
+      'FoldSignals.of was called before FoldSignalsScope was initialized.',
+    );
+  }
+
+  /// Returns the nearest [FoldSignals] found in [context], or null if none exists.
+  static FoldSignals? maybeOf(dynamic context) {
+    final hook = signalsMaybeOfHook;
+    if (hook != null) {
+      return hook(context as Object) as FoldSignals?;
+    }
+    return null;
+  }
+
   /// The physical edge of the vertical navigation column reported by the system,
   /// or null if no system column is active.
   NavEdge? get verticalBarEdge;
