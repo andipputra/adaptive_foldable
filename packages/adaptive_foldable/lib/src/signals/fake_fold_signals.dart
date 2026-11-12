@@ -119,14 +119,17 @@ class FakeFoldSignals extends ChangeNotifier implements FoldSignals {
 
 /// Named device and posture presets matching common phone, tablet, and foldable configurations.
 abstract final class FoldSignalsPresets {
-  /// iPhone Duo cover display in portrait orientation.
+  /// iPhone Duo cover display in portrait orientation, measured on the simulator.
   static final FoldSignalsSnapshot duoCoverPortrait = FoldSignalsSnapshot(
     verticalBarEdge: NavEdge.right,
     horizontalSizeClass: SizeClass.compact,
     verticalSizeClass: SizeClass.regular,
-    viewSize: const Size(414, 896),
+    viewSize: const Size(466, 678),
     activeFolds: const [],
-    occlusions: const [Rect.fromLTWH(180, 0, 54, 30)],
+    occlusions: const [
+      Rect.fromLTRB(399.7, 29.3, 436.7, 66.3),
+      Rect.fromLTRB(382, 0, 466, 174),
+    ],
     posture: Posture.closed,
     isAvailable: true,
     sdk271: true,
