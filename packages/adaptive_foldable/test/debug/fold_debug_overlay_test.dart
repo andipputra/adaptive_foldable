@@ -20,7 +20,7 @@ void main() {
       );
       expect(
         report,
-        contains('occlusions: [Rect.fromLTRB(451.0, 0.0, 500.0, 25.0)]'),
+        contains('occlusions: [Rect.fromLTRB(867.0, 0.0, 951.0, 124.0)]'),
       );
       expect(report, contains('sdk271: true'));
       expect(report, contains('isAvailable: true'));

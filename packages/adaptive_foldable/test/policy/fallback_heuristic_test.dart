@@ -103,13 +103,13 @@ void main() {
           expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.right);
         });
 
-        test('Duo cover landscape -> side column (right)', () {
-          // cover landscape: 896 x 414, compact x compact
+        test('Duo cover landscape -> side column (left, opposite camera)', () {
+          // cover landscape: 678 x 466, compact x compact, camera on right -> column on left
           final s = FoldSignalsPresets.duoCoverLandscape.copyWith(
             clearVerticalBarEdge: true,
           );
-          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.right);
-          expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.right);
+          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.left);
+          expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.left);
         });
 
         test('Regular iPhone -> bottom bar', () {

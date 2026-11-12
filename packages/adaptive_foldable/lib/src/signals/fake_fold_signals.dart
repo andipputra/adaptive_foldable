@@ -135,53 +135,56 @@ abstract final class FoldSignalsPresets {
     sdk271: true,
   );
 
-  /// iPhone Duo cover display in landscape orientation.
+  /// iPhone Duo cover display in landscape orientation, measured on the simulator.
   static final FoldSignalsSnapshot duoCoverLandscape = FoldSignalsSnapshot(
     verticalBarEdge: NavEdge.right,
     horizontalSizeClass: SizeClass.compact,
     verticalSizeClass: SizeClass.compact,
-    viewSize: const Size(896, 414),
+    viewSize: const Size(678, 466),
     activeFolds: const [],
-    occlusions: const [],
+    occlusions: const [
+      Rect.fromLTRB(611.7, 399.7, 648.7, 436.7),
+      Rect.fromLTRB(594.0, 384.0, 678.0, 466.0),
+    ],
     posture: Posture.closed,
     isAvailable: true,
     sdk271: true,
   );
 
-  /// iPhone Duo inner display in portrait orientation (bottom bar).
+  /// iPhone Duo inner display in portrait orientation, measured on the simulator.
   static final FoldSignalsSnapshot duoInnerPortrait = FoldSignalsSnapshot(
     verticalBarEdge: null,
     horizontalSizeClass: SizeClass.regular,
     verticalSizeClass: SizeClass.regular,
     viewSize: const Size(669, 951),
     activeFolds: const [],
-    occlusions: const [Rect.fromLTWH(310, 0, 49, 25)],
+    occlusions: const [Rect.fromLTRB(525.0, 0.0, 669.0, 82.0)],
     posture: Posture.fullyOpen,
     isAvailable: true,
     sdk271: true,
   );
 
-  /// iPhone Duo inner display in landscape orientation (side column).
+  /// iPhone Duo inner display in landscape orientation, measured on the simulator.
   static final FoldSignalsSnapshot duoInnerLandscape = FoldSignalsSnapshot(
     verticalBarEdge: NavEdge.right,
     horizontalSizeClass: SizeClass.regular,
     verticalSizeClass: SizeClass.regular,
     viewSize: const Size(951, 669),
     activeFolds: const [],
-    occlusions: const [Rect.fromLTWH(451, 0, 49, 25)],
+    occlusions: const [Rect.fromLTRB(867.0, 0.0, 951.0, 124.0)],
     posture: Posture.fullyOpen,
     isAvailable: true,
     sdk271: true,
   );
 
-  /// iPhone Duo partially open in book pose with a 40 pt vertical fold.
+  /// iPhone Duo partially open in book pose with a 40 pt vertical fold, measured on the simulator.
   static final FoldSignalsSnapshot duoBookPose = FoldSignalsSnapshot(
     verticalBarEdge: NavEdge.right,
     horizontalSizeClass: SizeClass.regular,
     verticalSizeClass: SizeClass.regular,
     viewSize: const Size(951, 669),
-    activeFolds: const [Rect.fromLTWH(455.5, 0, 40, 669)],
-    occlusions: const [Rect.fromLTWH(451, 0, 49, 25)],
+    activeFolds: const [Rect.fromLTRB(455.5, 0.0, 495.5, 669.0)],
+    occlusions: const [Rect.fromLTRB(867.0, 0.0, 951.0, 124.0)],
     posture: Posture.partiallyOpen,
     isAvailable: true,
     sdk271: true,

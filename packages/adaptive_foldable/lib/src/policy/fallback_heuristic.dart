@@ -5,8 +5,8 @@ import 'package:adaptive_foldable/src/signals/signal_types.dart';
 
 /// Aspect ratio threshold for detecting a short, wide cover display in landscape.
 ///
-/// Default is 1.6; initial assumption from design to be refined on hardware on the iPhone Duo simulator.
-const double kCoverAspect = 1.6;
+/// Default is 1.4; refined based on measured iPhone Duo cover landscape (678 x 466, aspect ~1.455) on the iPhone Duo simulator.
+const double kCoverAspect = 1.4;
 
 /// Computes the fallback navigation bar edge when [FoldSignals.verticalBarEdge] is unavailable.
 ///
