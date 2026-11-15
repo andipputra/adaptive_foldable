@@ -14,6 +14,13 @@ on:
     paths-ignore:
       - '**.md'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   checks:
     name: Checks (${{ matrix.name }})
@@ -35,10 +42,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: ${{ matrix.channel }}
           flutter-version: ${{ matrix.flutter-version }}
@@ -58,6 +65,9 @@ jobs:
 
       - name: Check layer boundaries
         run: dart run tool/check_layer_boundaries.dart
+
+      - name: Run tooling tests
+        run: flutter test tool/test
 
       - name: Run package unit tests
         run: (cd packages/adaptive_foldable && flutter test)
