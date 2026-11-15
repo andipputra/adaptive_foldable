@@ -82,54 +82,51 @@ void main() {
       );
     });
 
-    group(
-      'table-driven Duo configurations',
-      () {
-        test('Duo inner portrait -> bottom bar', () {
-          // inner portrait: 669 x 951, regular x regular
-          final s = FoldSignalsPresets.duoInnerPortrait.copyWith(
-            clearVerticalBarEdge: true,
-          );
-          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.bottom);
-          expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.bottom);
-        });
+    group('table-driven Duo configurations', () {
+      test('Duo inner portrait -> bottom bar', () {
+        // inner portrait: 669 x 951, regular x regular
+        final s = FoldSignalsPresets.duoInnerPortrait.copyWith(
+          clearVerticalBarEdge: true,
+        );
+        expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.bottom);
+        expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.bottom);
+      });
 
-        test('Duo inner landscape -> side column (right)', () {
-          // inner landscape: 951 x 669, regular x regular
-          final s = FoldSignalsPresets.duoInnerLandscape.copyWith(
-            clearVerticalBarEdge: true,
-          );
-          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.right);
-          expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.right);
-        });
+      test('Duo inner landscape -> side column (right)', () {
+        // inner landscape: 951 x 669, regular x regular
+        final s = FoldSignalsPresets.duoInnerLandscape.copyWith(
+          clearVerticalBarEdge: true,
+        );
+        expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.right);
+        expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.right);
+      });
 
-        test('Duo cover landscape -> side column (left, opposite camera)', () {
-          // cover landscape: 678 x 466, compact x compact, camera on right -> column on left
-          final s = FoldSignalsPresets.duoCoverLandscape.copyWith(
-            clearVerticalBarEdge: true,
-          );
-          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.left);
-          expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.left);
-        });
+      test('Duo cover landscape -> side column (left, opposite camera)', () {
+        // cover landscape: 678 x 466, compact x compact, camera on right -> column on left
+        final s = FoldSignalsPresets.duoCoverLandscape.copyWith(
+          clearVerticalBarEdge: true,
+        );
+        expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.left);
+        expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.left);
+      });
 
-        test('Regular iPhone -> bottom bar', () {
-          final s = FoldSignalsPresets.regularIphone;
-          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.bottom);
-          expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.bottom);
-        });
+      test('Regular iPhone -> bottom bar', () {
+        final s = FoldSignalsPresets.regularIphone;
+        expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.bottom);
+        expect(fallbackBarEdge(s, TextDirection.rtl), NavEdge.bottom);
+      });
 
-        test('iPad portrait -> bottom bar', () {
-          final s = FoldSignalsPresets.ipad.copyWith(
-            viewSize: const Size(768, 1024),
-          );
-          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.bottom);
-        });
+      test('iPad portrait -> bottom bar', () {
+        final s = FoldSignalsPresets.ipad.copyWith(
+          viewSize: const Size(768, 1024),
+        );
+        expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.bottom);
+      });
 
-        test('iPad landscape -> right column', () {
-          final s = FoldSignalsPresets.ipad; // 1024 x 768, regular x regular
-          expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.right);
-        });
-      },
-    );
+      test('iPad landscape -> right column', () {
+        final s = FoldSignalsPresets.ipad; // 1024 x 768, regular x regular
+        expect(fallbackBarEdge(s, TextDirection.ltr), NavEdge.right);
+      });
+    });
   });
 }
