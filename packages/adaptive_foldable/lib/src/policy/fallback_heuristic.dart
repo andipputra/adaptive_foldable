@@ -43,7 +43,9 @@ NavEdge fallbackBarEdge(FoldSignals signals, TextDirection direction) {
   if (isCompactWidth && isShortWideAspect) {
     if (signals.occlusions.isNotEmpty) {
       // Find horizontal center of outer camera occlusion
-      final occlusion = signals.occlusions.first;
+      final occlusion = signals.occlusions.reduce(
+        (a, b) => a.width * a.height >= b.width * b.height ? a : b,
+      );
       final occlusionCenterX = occlusion.left + (occlusion.width / 2);
       final viewCenterX = width / 2;
 

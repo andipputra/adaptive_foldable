@@ -162,7 +162,7 @@ void main() {
             expectedEdge: null,
             expectedHSize: SizeClass.compact,
             expectedVSize: SizeClass.regular,
-            expectedPosture: Posture.closed,
+            expectedPosture: Posture.unknown,
             hasActiveFold: false,
             expectedSdk271: false,
           ),

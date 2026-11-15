@@ -29,7 +29,7 @@ void main() {
         final signals = FoldSignalsSnapshot(
           horizontalSizeClass: SizeClass.compact,
           verticalSizeClass: SizeClass.compact,
-          viewSize: const Size(896, 414), // aspect > 1.6
+          viewSize: const Size(896, 414), // aspect >= kCoverAspect
         );
         expect(fallbackBarEdge(signals, TextDirection.ltr), NavEdge.right);
         expect(fallbackBarEdge(signals, TextDirection.rtl), NavEdge.right);

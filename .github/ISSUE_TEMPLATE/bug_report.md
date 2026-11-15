@@ -17,7 +17,7 @@ A clear and concise description of what the bug is.
 - **adaptive_foldable Version**:
 
 ## Debug Overlay Screenshot
-> **Required**: Please enable `debugOverlay: true` on `AdaptiveNavScaffold` in debug mode (`kDebugMode`) and attach a screenshot showing the overlay signals and resolved geometry.
+> **Required**: Please wrap your app in `FoldDebugOverlay` in debug mode and attach a screenshot showing the overlay signals and resolved geometry.
 
 [Attach screenshot here]
 

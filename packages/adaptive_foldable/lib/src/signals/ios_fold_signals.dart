@@ -71,8 +71,8 @@ class IosFoldSignals extends ChangeNotifier implements FoldSignals {
           _updateWithPayload(event);
         }
       },
-      onError: (dynamic error) {
-        // Platform stream errors handled gracefully.
+      onError: (Object error) {
+        debugPrint('adaptive_foldable: signal stream error: $error');
       },
     );
   }
@@ -85,8 +85,10 @@ class IosFoldSignals extends ChangeNotifier implements FoldSignals {
       if (initial != null) {
         _updateWithPayload(initial);
       }
-    } catch (_) {
-      // Bridge unavailable or channel failed.
+    } on MissingPluginException {
+      // No native bridge registered (for example in unit tests): stay unavailable.
+    } on PlatformException catch (error) {
+      debugPrint('adaptive_foldable: getSignals failed: $error');
     }
   }
 
@@ -98,6 +100,8 @@ class IosFoldSignals extends ChangeNotifier implements FoldSignals {
     }
   }
 
+  static double _asDouble(Object? value) => value is num ? value.toDouble() : 0;
+
   /// Decodes a raw payload map from the iOS bridge into a [FoldSignalsSnapshot].
   static FoldSignalsSnapshot decodePayload(Map<dynamic, dynamic>? payload) {
     if (payload == null) {
@@ -107,37 +111,31 @@ class IosFoldSignals extends ChangeNotifier implements FoldSignals {
     final rawViewSize = payload['viewSize'];
     Size viewSize = Size.zero;
     if (rawViewSize is Map) {
-      final w =
-          (rawViewSize['width'] ?? rawViewSize['w'] as num?)?.toDouble() ?? 0.0;
-      final h =
-          (rawViewSize['height'] ?? rawViewSize['h'] as num?)?.toDouble() ??
-          0.0;
-      viewSize = Size(w, h);
+      viewSize = Size(
+        _asDouble(rawViewSize['width']),
+        _asDouble(rawViewSize['height']),
+      );
     }
 
-    final rawHSize = payload['horizontalSizeClass'] as String?;
-    final hSize = switch (rawHSize) {
+    final hSize = switch (payload['horizontalSizeClass']) {
       'compact' => SizeClass.compact,
       'regular' => SizeClass.regular,
       _ => SizeClass.unknown,
     };
 
-    final rawVSize = payload['verticalSizeClass'] as String?;
-    final vSize = switch (rawVSize) {
+    final vSize = switch (payload['verticalSizeClass']) {
       'compact' => SizeClass.compact,
       'regular' => SizeClass.regular,
       _ => SizeClass.unknown,
     };
 
-    final rawEdge = payload['verticalBarEdge'] as String?;
-    final barEdge = switch (rawEdge) {
+    final barEdge = switch (payload['verticalBarEdge']) {
       'left' => NavEdge.left,
       'right' => NavEdge.right,
       _ => null,
     };
 
-    final rawPosture = payload['posture'] as String?;
-    final posture = switch (rawPosture) {
+    final posture = switch (payload['posture']) {
       'closed' => Posture.closed,
       'partiallyOpen' => Posture.partiallyOpen,
       'fullyOpen' => Posture.fullyOpen,
@@ -149,10 +147,10 @@ class IosFoldSignals extends ChangeNotifier implements FoldSignals {
       final result = <Rect>[];
       for (final item in list) {
         if (item is Map) {
-          final x = (item['x'] as num?)?.toDouble() ?? 0.0;
-          final y = (item['y'] as num?)?.toDouble() ?? 0.0;
-          final w = (item['width'] ?? item['w'] as num?)?.toDouble() ?? 0.0;
-          final h = (item['height'] ?? item['h'] as num?)?.toDouble() ?? 0.0;
+          final x = _asDouble(item['x']);
+          final y = _asDouble(item['y']);
+          final w = _asDouble(item['width']);
+          final h = _asDouble(item['height']);
           if (w > 0 && h > 0) {
             result.add(Rect.fromLTWH(x, y, w, h));
           }
@@ -163,8 +161,10 @@ class IosFoldSignals extends ChangeNotifier implements FoldSignals {
 
     final activeFolds = parseRects(payload['activeFolds']);
     final occlusions = parseRects(payload['occlusions']);
-    final isAvailable = payload['isAvailable'] as bool? ?? true;
-    final sdk271 = payload['sdk271'] as bool? ?? false;
+    final rawAvailable = payload['isAvailable'];
+    final isAvailable = rawAvailable is bool && rawAvailable;
+    final rawSdk271 = payload['sdk271'];
+    final sdk271 = rawSdk271 is bool && rawSdk271;
 
     return FoldSignalsSnapshot(
       verticalBarEdge: barEdge,

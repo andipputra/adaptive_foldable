@@ -22,7 +22,8 @@ class FoldSignalsScope extends StatefulWidget {
 
   /// Returns the nearest [FoldSignals] in [context].
   ///
-  /// Throws an [AssertionError] if no [FoldSignalsScope] is found in the widget tree.
+  /// Fails an assertion in debug builds, and throws a [StateError] in release
+  /// builds, if no [FoldSignalsScope] is found in the widget tree.
   static FoldSignals of(BuildContext context) {
     final signals = maybeOf(context);
     assert(
@@ -30,7 +31,10 @@ class FoldSignalsScope extends StatefulWidget {
       'No FoldSignalsScope found in the widget tree. '
       'Wrap your app or test widget with FoldSignalsScope.',
     );
-    return signals!;
+    if (signals == null) {
+      throw StateError('No FoldSignalsScope found in the widget tree.');
+    }
+    return signals;
   }
 
   /// Returns the nearest [FoldSignals] in [context], or null if none exists.
@@ -50,8 +54,6 @@ class _FoldSignalsScopeState extends State<FoldSignalsScope> {
   @override
   void initState() {
     super.initState();
-    FoldSignals.signalsOfHook = (context) =>
-        FoldSignalsScope.of(context as BuildContext);
     FoldSignals.signalsMaybeOfHook = (context) =>
         FoldSignalsScope.maybeOf(context as BuildContext);
 

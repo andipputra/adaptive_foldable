@@ -24,25 +24,21 @@ void main() {
     );
     final signals = FoldSignals.of(homeContext);
 
-    expect(signals, isNotNull);
-    expect(signals.horizontalSizeClass, isNotNull);
-    expect(signals.verticalSizeClass, isNotNull);
-    expect(signals.posture, isNotNull);
-    expect(signals.isAvailable, isNotNull);
+    expect(signals.isAvailable, isTrue);
+    expect(signals.viewSize.width, greaterThan(0));
+    expect(signals.horizontalSizeClass, isNot(SizeClass.unknown));
+    expect(signals.verticalSizeClass, isNot(SizeClass.unknown));
 
     // Printed so the signal values can be recorded from a simulator or emulator run.
-    debugPrint('M0-011 REPORT\n${formatSignalsReport(signals)}');
+    debugPrint(formatSignalsReport(signals));
     debugPrint(
-      'M0-011 RAW displayFeatures: '
+      'raw displayFeatures: '
       '${MediaQuery.of(homeContext).displayFeatures.map((f) => '${f.type}/${f.state}/${f.bounds}').toList()}',
     );
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      expect(signals.isAvailable, isTrue);
+      // Requires an Xcode 27.1+ build; older SDKs report false.
       expect(signals.sdk271, isTrue);
-      expect(signals.viewSize.width, greaterThan(0));
-      expect(signals.horizontalSizeClass, isNot(SizeClass.unknown));
-      expect(signals.verticalSizeClass, isNot(SizeClass.unknown));
     }
   });
 }

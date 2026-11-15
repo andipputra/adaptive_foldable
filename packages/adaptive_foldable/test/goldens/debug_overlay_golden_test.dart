@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('debug overlay golden on duoBookPose', (tester) async {
-    // Goldens run on macOS only per project rules.
-    if (!Platform.isMacOS) return;
-
+  testWidgets('debug overlay golden on duoBookPose', skip: !Platform.isMacOS, (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(951, 669);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);

@@ -224,7 +224,7 @@ abstract final class FoldSignalsPresets {
     viewSize: const Size(412, 915),
     activeFolds: const [],
     occlusions: const [],
-    posture: Posture.closed,
+    posture: Posture.unknown,
     isAvailable: true,
     sdk271: false,
   );

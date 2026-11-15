@@ -37,7 +37,7 @@ class _ExampleHomePageState extends State<ExampleHomePage> {
 
     return FoldDebugOverlay(
       enabled: _overlayEnabled,
-      ruleLabel: 'M0SignalsDemo',
+      ruleLabel: 'SignalsDemo',
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Adaptive Foldable Example'),

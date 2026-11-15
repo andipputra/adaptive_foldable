@@ -52,6 +52,24 @@ void main() {
       expect(snapshot.isAvailable, isFalse);
     });
 
+    test('empty payload decodes as unavailable', () {
+      final snapshot = IosFoldSignals.decodePayload(const {});
+      expect(snapshot.isAvailable, isFalse);
+      expect(snapshot.sdk271, isFalse);
+    });
+
+    test('ignores non-numeric geometry instead of throwing', () {
+      final snapshot = IosFoldSignals.decodePayload({
+        'viewSize': {'width': 'wide', 'height': 669},
+        'activeFolds': [
+          {'x': 1, 'y': 0, 'width': '40', 'height': 669},
+          {'x': 455.5, 'y': 0, 'width': 40, 'height': 669},
+        ],
+      });
+      expect(snapshot.viewSize, const Size(0, 669));
+      expect(snapshot.activeFolds, [const Rect.fromLTWH(455.5, 0, 40, 669)]);
+    });
+
     test('maps unknown size class and posture to unknown', () {
       final snapshot = IosFoldSignals.decodePayload({
         'horizontalSizeClass': 'something_new',
@@ -100,6 +118,24 @@ void main() {
       expect(merged.posture, Posture.partiallyOpen);
     });
 
+    test('Flutter fold feature with unknown state keeps bridge folds', () {
+      final bridge = FoldSignalsPresets.duoBookPose;
+      const unknownFold = DisplayFeature(
+        bounds: Rect.fromLTWH(450, 0, 42, 669),
+        type: DisplayFeatureType.fold,
+        state: DisplayFeatureState.unknown,
+      );
+
+      final merged = mergeFoldSources(
+        bridge: bridge,
+        displayFeatures: const [unknownFold],
+        viewSize: const Size(951, 669),
+      );
+
+      expect(merged.activeFolds, bridge.activeFolds);
+      expect(merged.posture, bridge.posture);
+    });
+
     test(
       'when Flutter displayFeature indicates flat posture, fold is cleared',
       () {
@@ -132,7 +168,7 @@ void main() {
       expect(s.horizontalSizeClass, SizeClass.compact);
       expect(s.verticalSizeClass, SizeClass.regular);
       expect(s.verticalBarEdge, isNull);
-      expect(s.posture, Posture.closed);
+      expect(s.posture, Posture.unknown);
       expect(s.activeFolds, isEmpty);
     });
 

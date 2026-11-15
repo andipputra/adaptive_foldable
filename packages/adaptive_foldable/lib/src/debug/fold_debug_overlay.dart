@@ -185,6 +185,7 @@ class _FoldDebugOverlayPainter extends CustomPainter {
         Offset(size.width - cardWidth - rightMargin + cardPadding, currentY),
       );
       currentY += textPainter.height + 3.0;
+      textPainter.dispose();
     }
   }
 

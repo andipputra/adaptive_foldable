@@ -40,10 +40,6 @@ abstract final class AndroidFoldSignals {
       }
     }
 
-    if (displayFeatures.isEmpty) {
-      posture = hSize == SizeClass.compact ? Posture.closed : Posture.unknown;
-    }
-
     return FoldSignalsSnapshot(
       verticalBarEdge: null,
       horizontalSizeClass: hSize,

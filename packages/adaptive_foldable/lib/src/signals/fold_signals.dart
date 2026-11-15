@@ -5,32 +5,33 @@ import 'package:flutter/foundation.dart';
 
 /// The interface through which all higher layers access platform and foldable device signals.
 abstract interface class FoldSignals implements Listenable {
-  /// Internal hook connecting [of] to the UI scope without importing widgets in pure layers.
-  static Object? Function(Object context)? signalsOfHook;
-
   /// Internal hook connecting [maybeOf] to the UI scope without importing widgets in pure layers.
+  ///
+  /// Set by `FoldSignalsScope`; not part of the public API.
   static Object? Function(Object context)? signalsMaybeOfHook;
 
-  /// Returns the nearest [FoldSignals] found in [context].
+  /// Returns the nearest [FoldSignals] found in the `BuildContext` [context].
   ///
-  /// Throws an [AssertionError] if no [FoldSignalsScope] is found in the widget tree.
-  static FoldSignals of(dynamic context) {
-    final hook = signalsOfHook;
-    if (hook != null) {
-      return hook(context as Object) as FoldSignals;
-    }
-    throw UnsupportedError(
-      'FoldSignals.of was called before FoldSignalsScope was initialized.',
+  /// Fails an assertion in debug builds, and throws a [StateError] in release
+  /// builds, if no `FoldSignalsScope` is found in the widget tree.
+  static FoldSignals of(Object context) {
+    final signals = maybeOf(context);
+    assert(
+      signals != null,
+      'No FoldSignalsScope found in the widget tree. '
+      'Wrap your app or test widget with FoldSignalsScope.',
     );
+    if (signals == null) {
+      throw StateError('No FoldSignalsScope found in the widget tree.');
+    }
+    return signals;
   }
 
-  /// Returns the nearest [FoldSignals] found in [context], or null if none exists.
-  static FoldSignals? maybeOf(dynamic context) {
+  /// Returns the nearest [FoldSignals] found in the `BuildContext` [context],
+  /// or null if none exists.
+  static FoldSignals? maybeOf(Object context) {
     final hook = signalsMaybeOfHook;
-    if (hook != null) {
-      return hook(context as Object) as FoldSignals?;
-    }
-    return null;
+    return hook == null ? null : hook(context) as FoldSignals?;
   }
 
   /// The physical edge of the vertical navigation column reported by the system,

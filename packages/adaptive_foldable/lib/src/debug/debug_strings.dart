@@ -30,9 +30,6 @@ abstract final class DebugStrings {
   /// Fired rule label.
   static const String ruleFired = 'Rule:';
 
-  /// View size label.
-  static const String viewSize = 'View:';
-
   /// None label.
   static const String none = 'none';
 
