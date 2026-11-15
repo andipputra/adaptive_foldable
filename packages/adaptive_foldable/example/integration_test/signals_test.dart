@@ -32,6 +32,10 @@ void main() {
 
     // Printed so the signal values can be recorded from a simulator or emulator run.
     debugPrint('M0-011 REPORT\n${formatSignalsReport(signals)}');
+    debugPrint(
+      'M0-011 RAW displayFeatures: '
+      '${MediaQuery.of(homeContext).displayFeatures.map((f) => '${f.type}/${f.state}/${f.bounds}').toList()}',
+    );
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       expect(signals.isAvailable, isTrue);
