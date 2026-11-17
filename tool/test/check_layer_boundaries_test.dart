@@ -200,5 +200,21 @@ export 'package:flutter/widgets.dart';
         hasLength(1),
       );
     });
+
+    test('IconData allowance survives line wrapping and ignores comments', () {
+      const model = 'packages/adaptive_foldable/lib/src/model/nav_action.dart';
+      expect(
+        findViolations({
+          model: "import 'package:flutter/widgets.dart'\n    show IconData;",
+        }),
+        isEmpty,
+      );
+      expect(
+        findViolations({
+          model: "import 'package:flutter/widgets.dart'; // show IconData;",
+        }),
+        hasLength(1),
+      );
+    });
   });
 }

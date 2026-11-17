@@ -138,6 +138,59 @@ void main() {
     });
   });
 
+  group('review regressions', () {
+    test('bottom bar is inset by side padding', () {
+      final g = _g(
+        NavEdge.bottom,
+        _s(const Size(800, 400)),
+        pad: const NavInsets(left: 44, right: 44),
+      );
+      expect(g.barRect.left, 44);
+      expect(g.barRect.right, 756);
+    });
+
+    test('text scale grows the bottom bar', () {
+      final s = _s(const Size(400, 800));
+      final base = resolveGeometry(
+        placement: const NavPlacement(NavEdge.bottom),
+        signals: s,
+      );
+      final big = resolveGeometry(
+        placement: const NavPlacement(NavEdge.bottom),
+        signals: s,
+        textScale: 2,
+      );
+      expect(big.barRect.height, greaterThan(base.barRect.height));
+    });
+
+    test('skip region stays within the bar after a fold cut', () {
+      final g = _g(
+        NavEdge.left,
+        _s(
+          const Size(669, 951),
+          folds: const [Rect.fromLTWH(30, 0, 10, 951)],
+          occlusions: const [Rect.fromLTWH(0, 0, 80, 40)],
+        ),
+      );
+      if (g.skipRegion != null) {
+        expect(g.skipRegion!.left, greaterThanOrEqualTo(g.barRect.left));
+        expect(g.skipRegion!.right, lessThanOrEqualTo(g.barRect.right));
+      }
+    });
+
+    test('two folds leave the larger remaining piece clear of both', () {
+      final folds = const [
+        Rect.fromLTWH(300, 0, 10, 600),
+        Rect.fromLTWH(600, 0, 10, 600),
+      ];
+      final g = _g(NavEdge.bottom, _s(const Size(1000, 600), folds: folds));
+      for (final f in folds) {
+        expect(g.barRect.overlaps(f), isFalse);
+      }
+      expect(g.barRect.width, greaterThan(300));
+    });
+  });
+
   test('fold overlap property holds for 1000 generated cases', () {
     final rnd = math.Random(42);
     const size = Size(900, 700);

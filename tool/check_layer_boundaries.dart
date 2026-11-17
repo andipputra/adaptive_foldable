@@ -42,12 +42,24 @@ bool isModelFile(String path) =>
 /// `package:flutter/widgets.dart` restricted to `show IconData`.
 bool isAllowedModelDirective(String uri, String line) {
   if (uri == 'package:flutter/widgets.dart') {
-    return RegExp(r'\bshow\s+IconData\s*;').hasMatch(line);
+    return RegExp(r'^\s*(import|export)\s+\S+\s+show\s+IconData\s*;$')
+        .hasMatch(line);
   }
   if (uri.startsWith('package:flutter/')) {
     return uri == 'package:flutter/foundation.dart';
   }
   return isAllowedImport(uri);
+}
+
+/// Joins the directive starting at [start] up to its `;`, dropping `//` comments and extra whitespace.
+String _fullDirective(List<String> lines, int start) {
+  final buffer = StringBuffer();
+  for (var i = start; i < lines.length; i++) {
+    final code = lines[i].split('//').first.trim();
+    buffer.write(buffer.isEmpty ? code : ' $code');
+    if (code.contains(';')) break;
+  }
+  return buffer.toString().replaceAll(RegExp(r'\s+'), ' ');
 }
 
 /// Returns true if [uri] is an allowed import/export in pure layers.
@@ -126,7 +138,7 @@ List<Violation> findViolations(Map<String, String> sources) {
       if (match != null) {
         final uri = match.group(2)!;
         final allowed = isModel
-            ? isAllowedModelDirective(uri, line)
+            ? isAllowedModelDirective(uri, _fullDirective(lines, i))
             : isAllowedImport(uri);
         if (!allowed) {
           violations.add(

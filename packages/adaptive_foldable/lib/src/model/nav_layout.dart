@@ -63,19 +63,24 @@ class NavLayout {
   /// Called with the index of a tapped tab.
   final ValueChanged<int>? onSelected;
 
-  /// Number of visible panes, 1 or 2.
+  /// Number of visible panes, 1 or 2; always 1 until the fold kit (M3) reports two-pane layouts.
   final int paneCount;
 
   /// The device posture.
   final Posture posture;
 
   /// Returns a copy with the given fields replaced.
+  ///
+  /// Nullable fields keep their value when omitted; pass the matching `clear*`
+  /// flag to reset one to null.
   NavLayout copyWith({
     NavPlacement? placement,
     NavGeometry? geometry,
     bool? showBack,
     VoidCallback? onBack,
+    bool clearOnBack = false,
     NavAction? prominentAction,
+    bool clearProminentAction = false,
     List<NavActionGroup>? visibleActions,
     List<NavAction>? overflowedActions,
     List<NavActionGroup>? headerActions,
@@ -83,21 +88,24 @@ class NavLayout {
     List<NavDestination>? destinations,
     int? selectedIndex,
     ValueChanged<int>? onSelected,
+    bool clearOnSelected = false,
     int? paneCount,
     Posture? posture,
   }) => NavLayout(
     placement: placement ?? this.placement,
     geometry: geometry ?? this.geometry,
     showBack: showBack ?? this.showBack,
-    onBack: onBack ?? this.onBack,
-    prominentAction: prominentAction ?? this.prominentAction,
+    onBack: clearOnBack ? null : (onBack ?? this.onBack),
+    prominentAction: clearProminentAction
+        ? null
+        : (prominentAction ?? this.prominentAction),
     visibleActions: visibleActions ?? this.visibleActions,
     overflowedActions: overflowedActions ?? this.overflowedActions,
     headerActions: headerActions ?? this.headerActions,
     tabsCompressed: tabsCompressed ?? this.tabsCompressed,
     destinations: destinations ?? this.destinations,
     selectedIndex: selectedIndex ?? this.selectedIndex,
-    onSelected: onSelected ?? this.onSelected,
+    onSelected: clearOnSelected ? null : (onSelected ?? this.onSelected),
     paneCount: paneCount ?? this.paneCount,
     posture: posture ?? this.posture,
   );

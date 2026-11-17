@@ -1,3 +1,5 @@
+import 'dart:ui' show TextDirection;
+
 import 'package:adaptive_foldable/src/signals/signal_types.dart';
 
 /// The edge a navigation bar is attached to.
@@ -15,6 +17,17 @@ class NavPlacement {
 
   /// Whether the bar is a side column rather than a bottom bar.
   bool get isVertical => edge != NavEdge.bottom;
+
+  /// Whether a side bar sits on the physical left under [direction].
+  ///
+  /// Logical edges follow [direction]; physical edges never flip. Always false for a bottom bar.
+  bool isOnLeft(TextDirection direction) => switch (edge) {
+    NavEdge.left => true,
+    NavEdge.right => false,
+    NavEdge.leading => direction == TextDirection.ltr,
+    NavEdge.trailing => direction == TextDirection.rtl,
+    NavEdge.bottom => false,
+  };
 
   @override
   bool operator ==(Object other) => other is NavPlacement && other.edge == edge;

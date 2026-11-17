@@ -1,6 +1,5 @@
 import 'package:adaptive_foldable/src/bars/nav_bar_content.dart';
 import 'package:adaptive_foldable/src/model/nav_layout.dart';
-import 'package:adaptive_foldable/src/signals/signal_types.dart';
 import 'package:flutter/cupertino.dart';
 
 /// Cupertino-style reference bar: bottom tab bar, or a side column on a side edge.
@@ -38,7 +37,7 @@ class CupertinoStyleNavBar extends StatelessWidget {
       context,
     );
     if (layout.placement.isVertical) {
-      final onLeft = layout.placement.edge == NavEdge.left;
+      final onLeft = layout.placement.isOnLeft(Directionality.of(context));
       return DecoratedBox(
         decoration: BoxDecoration(
           color: colors.background,

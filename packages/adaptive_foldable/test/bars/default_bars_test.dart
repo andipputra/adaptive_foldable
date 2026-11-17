@@ -1,7 +1,8 @@
-import 'dart:ui' show Tristate;
+import 'dart:ui' show CheckedState, Rect, Tristate;
 
 import 'package:adaptive_foldable/adaptive_foldable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 
 const _dests = [
@@ -194,6 +195,117 @@ void main() {
         tester.getTopLeft(find.text('Home')).dx,
         greaterThan(s.viewSize.width - 120),
       );
+    });
+  });
+
+  group('review regressions', () {
+    testWidgets('Back and plain actions expose no checked state', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      final layout = NavLayout(
+        placement: const NavPlacement(NavEdge.bottom),
+        geometry: const NavGeometry(
+          barRect: Rect.fromLTWH(0, 700, 400, 100),
+          itemAxis: NavAxis.horizontal,
+        ),
+        showBack: true,
+        onBack: () {},
+        prominentAction: NavAction(
+          icon: Icons.check,
+          label: 'Done',
+          onPressed: () {},
+        ),
+        destinations: _dests,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Material(child: MaterialNavBar(layout: layout)),
+        ),
+      );
+      for (final l in ['Back', 'Done']) {
+        final node = tester.getSemantics(find.bySemanticsLabel(l));
+        expect(node.flagsCollection.isChecked, CheckedState.none, reason: l);
+      }
+      handle.dispose();
+    });
+
+    testWidgets('tabs announce their position', (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        FakeFoldSignals.from(FoldSignalsPresets.regularIphone),
+        materialBarBuilder,
+      );
+      expect(find.bySemanticsLabel('Home'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Home')).value,
+        contains('1 of 3'),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('keyboard activation selects a tab', (tester) async {
+      int? tapped;
+      await _pump(
+        tester,
+        FakeFoldSignals.from(FoldSignalsPresets.regularIphone),
+        materialBarBuilder,
+        onSelected: (i) => tapped = i,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(tapped, isNotNull);
+    });
+
+    testWidgets('tooltip carries the label', (tester) async {
+      await _pump(
+        tester,
+        FakeFoldSignals.from(FoldSignalsPresets.regularIphone),
+        materialBarBuilder,
+      );
+      expect(find.byTooltip('Home'), findsOneWidget);
+    });
+
+    testWidgets('large text scale grows the bottom bar, no overflow', (
+      tester,
+    ) async {
+      final s = FakeFoldSignals.from(FoldSignalsPresets.regularIphone);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = s.viewSize;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (c, child) => MediaQuery(
+            data: MediaQuery.of(c)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: FoldSignalsScope(override: s, child: child!),
+          ),
+          home: AdaptiveNavScaffold(
+            destinations: _dests,
+            selectedIndex: 0,
+            onSelected: (_) {},
+            barBuilder: materialBarBuilder,
+            body: const SizedBox(),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Cupertino logical edge resolves the side by direction', (
+      tester,
+    ) async {
+      final s = FakeFoldSignals.from(FoldSignalsPresets.androidMedium);
+      await _pump(
+        tester,
+        s,
+        cupertinoBarBuilder,
+        policy: const MaterialPolicy(),
+      );
+      expect(tester.getTopLeft(find.text('Home')).dx, lessThan(100));
     });
   });
 }

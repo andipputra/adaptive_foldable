@@ -6,12 +6,14 @@ import 'package:adaptive_foldable/src/model/nav_geometry.dart';
 import 'package:adaptive_foldable/src/model/nav_insets.dart';
 import 'package:adaptive_foldable/src/model/nav_placement.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
-import 'package:adaptive_foldable/src/signals/signal_types.dart';
 
 /// Thickness in dp of a bottom bar, excluding the home-indicator inset.
 ///
 /// Initial value; revisited against the simulator in ANS-M1-013.
 const double kBottomBarThickness = 56;
+
+/// Extra bottom-bar height in dp per 1.0 of text scale above 1.0, so labels stay inside the bar.
+const double kBottomBarThicknessPerTextScale = 17;
 
 /// Thickness in dp of a side rail or column, excluding any side inset.
 ///
@@ -33,6 +35,7 @@ const double kFoldClearance = 4;
 ///   below a status or camera region at the top ([NavGeometry.skipRegion]) and
 ///   ending above a camera region at the bottom or the home-indicator gap.
 /// - Logical edges resolve through [direction]; physical edges do not flip.
+/// - [textScale] grows the bottom bar so scaled labels fit.
 /// - The result never intersects an active fold: the bar is cut to its largest
 ///   remaining piece, [kFoldClearance] away from the fold, and
 ///   [NavGeometry.foldClearance] reports that distance (0 when no cut was needed).
@@ -41,24 +44,29 @@ NavGeometry resolveGeometry({
   required FoldSignals signals,
   NavInsets viewPadding = NavInsets.zero,
   TextDirection direction = TextDirection.ltr,
+  double textScale = 1,
 }) {
   final size = signals.viewSize;
   final gap = viewPadding.bottom;
   final isVertical = placement.isVertical;
 
   late Rect bar;
-  Rect? skip;
+  var skipBottom = 0.0;
   if (!isVertical) {
+    final thickness =
+        kBottomBarThickness +
+        kBottomBarThicknessPerTextScale * (math.max(1, textScale) - 1);
     bar = Rect.fromLTRB(
-      0,
-      math.max(0, size.height - kBottomBarThickness - gap),
-      size.width,
+      math.min(viewPadding.left, size.width),
+      math.max(0, size.height - thickness - gap),
+      math.max(0, size.width - viewPadding.right),
       size.height,
     );
   } else {
-    final onLeft = _isLeft(placement.edge, direction);
+    final onLeft = placement.isOnLeft(direction);
     final span = _freeSpan(signals, viewPadding, onLeft, size);
     final top = span.$1;
+    skipBottom = top;
     final bottom = math.max(top, math.min(span.$2, size.height - gap));
     bar = onLeft
         ? Rect.fromLTRB(0, top, kSideBarThickness + viewPadding.left, bottom)
@@ -68,19 +76,34 @@ NavGeometry resolveGeometry({
             size.width,
             bottom,
           );
-    if (top > 0) {
-      skip = Rect.fromLTRB(bar.left, 0, bar.right, top);
-    }
   }
 
+  var pieces = <Rect>[bar];
   var cutAway = false;
   for (final fold in signals.activeFolds) {
     final keepOut = fold.inflate(kFoldClearance);
-    if (bar.overlaps(keepOut)) {
-      bar = _largestPieceOutside(bar, keepOut);
-      cutAway = true;
+    final next = <Rect>[];
+    for (final piece in pieces) {
+      if (piece.overlaps(keepOut)) {
+        cutAway = true;
+        next.addAll(_piecesOutside(piece, keepOut));
+      } else {
+        next.add(piece);
+      }
     }
+    pieces = next;
   }
+  if (cutAway) {
+    bar = pieces.isEmpty
+        ? Rect.fromLTWH(bar.left, bar.top, 0, 0)
+        : pieces.reduce(
+            (a, b) => a.width * a.height >= b.width * b.height ? a : b,
+          );
+  }
+
+  final skip = isVertical && skipBottom > 0 && !bar.isEmpty
+      ? Rect.fromLTRB(bar.left, 0, bar.right, skipBottom)
+      : null;
 
   return NavGeometry(
     barRect: bar,
@@ -90,14 +113,6 @@ NavGeometry resolveGeometry({
     foldClearance: cutAway ? kFoldClearance : 0,
   );
 }
-
-bool _isLeft(NavEdge edge, TextDirection direction) => switch (edge) {
-  NavEdge.left => true,
-  NavEdge.right => false,
-  NavEdge.leading => direction == TextDirection.ltr,
-  NavEdge.trailing => direction == TextDirection.rtl,
-  NavEdge.bottom => false,
-};
 
 /// Vertical span `(top, bottom)` of the side column left free by the status
 /// bar and by camera occlusions that overlap the column.
@@ -127,22 +142,14 @@ bool _isLeft(NavEdge edge, TextDirection direction) => switch (edge) {
   return (math.min(top, size.height), bottom);
 }
 
-/// Returns the largest-area part of [bar] that does not overlap [keepOut].
-Rect _largestPieceOutside(Rect bar, Rect keepOut) {
-  final pieces = <Rect>[
-    if (keepOut.left > bar.left)
-      Rect.fromLTRB(bar.left, bar.top, keepOut.left, bar.bottom),
-    if (keepOut.right < bar.right)
-      Rect.fromLTRB(keepOut.right, bar.top, bar.right, bar.bottom),
-    if (keepOut.top > bar.top)
-      Rect.fromLTRB(bar.left, bar.top, bar.right, keepOut.top),
-    if (keepOut.bottom < bar.bottom)
-      Rect.fromLTRB(bar.left, keepOut.bottom, bar.right, bar.bottom),
-  ];
-  if (pieces.isEmpty) {
-    return Rect.fromLTWH(bar.left, bar.top, 0, 0);
-  }
-  return pieces.reduce(
-    (a, b) => a.width * a.height >= b.width * b.height ? a : b,
-  );
-}
+/// Returns the parts of [bar] that do not overlap [keepOut].
+List<Rect> _piecesOutside(Rect bar, Rect keepOut) => [
+  if (keepOut.left > bar.left)
+    Rect.fromLTRB(bar.left, bar.top, keepOut.left, bar.bottom),
+  if (keepOut.right < bar.right)
+    Rect.fromLTRB(keepOut.right, bar.top, bar.right, bar.bottom),
+  if (keepOut.top > bar.top)
+    Rect.fromLTRB(bar.left, bar.top, bar.right, keepOut.top),
+  if (keepOut.bottom < bar.bottom)
+    Rect.fromLTRB(bar.left, keepOut.bottom, bar.right, bar.bottom),
+];

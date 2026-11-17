@@ -41,11 +41,12 @@ List<Widget> buildNavBarItems(
     label: a.label,
     selected: a.selected,
     isSelectable: false,
+    isToggle: a.selected,
     enabled: a.enabled,
     onTap: a.onPressed,
     badgeCount: a.badgeCount,
-    activeColor: a.isDestructive ? const Color(0xFFB3261E) : colors.active,
-    inactiveColor: a.isDestructive ? const Color(0xFFB3261E) : colors.inactive,
+    activeColor: a.isDestructive ? kDestructiveColor : colors.active,
+    inactiveColor: a.isDestructive ? kDestructiveColor : colors.inactive,
   );
 
   final leading = <Widget>[
@@ -73,6 +74,7 @@ List<Widget> buildNavBarItems(
         selected: i == layout.selectedIndex,
         badgeCount: layout.destinations[i].badgeCount,
         indicatorColor: colors.indicator,
+        position: BarStrings.tabPosition(i + 1, layout.destinations.length),
         activeColor: colors.active,
         inactiveColor: colors.inactive,
         onTap: () => layout.onSelected?.call(i),

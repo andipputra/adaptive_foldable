@@ -32,12 +32,13 @@ class NavGeometry {
   NavGeometry copyWith({
     Rect? barRect,
     Rect? skipRegion,
+    bool clearSkipRegion = false,
     NavAxis? itemAxis,
     double? homeIndicatorGap,
     double? foldClearance,
   }) => NavGeometry(
     barRect: barRect ?? this.barRect,
-    skipRegion: skipRegion ?? this.skipRegion,
+    skipRegion: clearSkipRegion ? null : (skipRegion ?? this.skipRegion),
     itemAxis: itemAxis ?? this.itemAxis,
     homeIndicatorGap: homeIndicatorGap ?? this.homeIndicatorGap,
     foldClearance: foldClearance ?? this.foldClearance,

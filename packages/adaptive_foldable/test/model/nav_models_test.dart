@@ -23,6 +23,33 @@ void main() {
       }
     });
 
+    test('isOnLeft resolves logical edges and keeps physical ones', () {
+      expect(
+        const NavPlacement(NavEdge.leading).isOnLeft(TextDirection.ltr),
+        isTrue,
+      );
+      expect(
+        const NavPlacement(NavEdge.leading).isOnLeft(TextDirection.rtl),
+        isFalse,
+      );
+      expect(
+        const NavPlacement(NavEdge.trailing).isOnLeft(TextDirection.rtl),
+        isTrue,
+      );
+      expect(
+        const NavPlacement(NavEdge.left).isOnLeft(TextDirection.rtl),
+        isTrue,
+      );
+      expect(
+        const NavPlacement(NavEdge.right).isOnLeft(TextDirection.ltr),
+        isFalse,
+      );
+      expect(
+        const NavPlacement(NavEdge.bottom).isOnLeft(TextDirection.ltr),
+        isFalse,
+      );
+    });
+
     test('equality by edge', () {
       expect(
         const NavPlacement(NavEdge.left),
@@ -131,6 +158,28 @@ void main() {
       expect(next.posture, Posture.fullyOpen);
       expect(next, isNot(layout()));
       expect(layout().copyWith(), layout());
+    });
+
+    test('copyWith can clear nullable fields', () {
+      final l = layout().copyWith(
+        onBack: () {},
+        prominentAction: const NavAction(
+          icon: IconData(1),
+          label: 'A',
+          onPressed: noop,
+        ),
+      );
+      expect(l.onBack, isNotNull);
+      expect(l.copyWith(clearOnBack: true).onBack, isNull);
+      expect(l.copyWith(clearProminentAction: true).prominentAction, isNull);
+      expect(geometry().copyWith(skipRegion: Rect.zero).skipRegion, isNotNull);
+      expect(
+        geometry()
+            .copyWith(skipRegion: Rect.zero)
+            .copyWith(clearSkipRegion: true)
+            .skipRegion,
+        isNull,
+      );
     });
 
     test('asserts paneCount is 1 or 2', () {

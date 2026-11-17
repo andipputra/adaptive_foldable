@@ -27,12 +27,16 @@ class NavDestination {
     IconData? icon,
     String? label,
     IconData? selectedIcon,
+    bool clearSelectedIcon = false,
     int? badgeCount,
+    bool clearBadgeCount = false,
   }) => NavDestination(
     icon: icon ?? this.icon,
     label: label ?? this.label,
-    selectedIcon: selectedIcon ?? this.selectedIcon,
-    badgeCount: badgeCount ?? this.badgeCount,
+    selectedIcon: clearSelectedIcon
+        ? null
+        : (selectedIcon ?? this.selectedIcon),
+    badgeCount: clearBadgeCount ? null : (badgeCount ?? this.badgeCount),
   );
 
   @override

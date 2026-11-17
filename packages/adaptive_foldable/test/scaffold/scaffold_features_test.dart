@@ -297,7 +297,7 @@ void main() {
         () => destinationsFromNavigationDestinations(const [
           NavigationDestination(icon: SizedBox(), label: 'X'),
         ]),
-        throwsAssertionError,
+        throwsArgumentError,
       );
     });
 
@@ -306,7 +306,7 @@ void main() {
         () => destinationsFromBottomNavigationBarItems(const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
         ]),
-        throwsAssertionError,
+        throwsArgumentError,
       );
     });
 
@@ -352,6 +352,78 @@ void main() {
         ),
       );
       expect(find.text('Beta'), findsOneWidget);
+    });
+  });
+
+  group('review regressions', () {
+    testWidgets('null barBuilder draws the platform default bar', (
+      tester,
+    ) async {
+      final s = _sig(size: const Size(400, 800));
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = s.viewSize;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (c, child) => FoldSignalsScope(override: s, child: child!),
+          home: AdaptiveNavScaffold(
+            destinations: _dests,
+            selectedIndex: 0,
+            onSelected: (_) {},
+            policy: const MaterialPolicy(),
+            body: const SizedBox(),
+          ),
+        ),
+      );
+      expect(find.byType(MaterialNavBar), findsOneWidget);
+    });
+
+    testWidgets('late callback does not fire with a stale previous', (
+      tester,
+    ) async {
+      final calls = <NavLayout>[];
+      final s = _sig(size: const Size(400, 800));
+      await _pump(tester, s, policy: const MaterialPolicy());
+      s.update(viewSize: const Size(900, 800));
+      tester.view.physicalSize = const Size(900, 800);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await _pump(
+        tester,
+        s,
+        policy: const MaterialPolicy(),
+        onLayoutChanged: (p, n) => calls.add(n),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      expect(calls, isEmpty);
+    });
+
+    testWidgets('keyboard inset is reduced by the bar height', (tester) async {
+      final s = _sig(size: const Size(400, 800));
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = s.viewSize;
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.reset);
+      double? inset;
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (c, child) => FoldSignalsScope(override: s, child: child!),
+          home: AdaptiveNavScaffold(
+            destinations: _dests,
+            selectedIndex: 0,
+            onSelected: (_) {},
+            policy: const MaterialPolicy(),
+            body: Builder(
+              builder: (context) {
+                inset = MediaQuery.viewInsetsOf(context).bottom;
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+      expect(inset, lessThan(300));
+      expect(inset, greaterThanOrEqualTo(0));
     });
   });
 }

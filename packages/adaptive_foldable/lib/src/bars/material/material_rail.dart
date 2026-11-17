@@ -4,8 +4,9 @@ import 'package:flutter/widgets.dart';
 
 /// Material 3 style navigation rail drawn through `barBuilder`.
 ///
-/// The prominent action sits at the rail's top, like a FAB slot; other actions
-/// stay in the header strip.
+/// The prominent action sits at the rail's top, like a FAB slot. Other actions
+/// are left out of the rail on purpose: the app draws them with
+/// `MaterialNavBar.headerStrip` from `NavLayout.headerActions` (filled from M2).
 class MaterialRail extends StatelessWidget {
   /// Creates a rail for [layout].
   const MaterialRail({super.key, required this.layout, required this.colors});

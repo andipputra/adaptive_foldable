@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:adaptive_foldable/src/bars/cupertino/cupertino_style_nav_bar.dart';
+import 'package:adaptive_foldable/src/bars/material/material_nav_bar.dart';
 import 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart';
 import 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
@@ -14,12 +16,11 @@ import 'package:adaptive_foldable/src/policy/material_policy.dart';
 import 'package:adaptive_foldable/src/policy/nav_placement_policy.dart';
 import 'package:adaptive_foldable/src/scaffold/nav_adapters.dart';
 import 'package:adaptive_foldable/src/scaffold/nav_transitions.dart';
-import 'package:adaptive_foldable/src/scaffold/placeholder_nav_bar.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals_scope.dart';
-import 'package:flutter/foundation.dart';
+import 'package:adaptive_foldable/src/signals/signal_types.dart';
 import 'package:flutter/material.dart'
-    show BottomNavigationBarItem, NavigationDestination;
+    show BottomNavigationBarItem, NavigationDestination, Theme;
 import 'package:flutter/widgets.dart';
 
 /// Draws the navigation bar for a resolved [NavLayout].
@@ -44,7 +45,8 @@ typedef NavOverflowBuilder = Widget Function(
 ///
 /// The widget tree is always a [Stack]: the body is padded, never reparented,
 /// so scroll offsets, text fields and selected tabs survive every layout switch.
-/// Requires a [FoldSignalsScope] above it.
+/// Requires a [FoldSignalsScope] above it, and must fill the Flutter view:
+/// the bar rectangle is resolved in view coordinates.
 class AdaptiveNavScaffold extends StatefulWidget {
   /// Creates a scaffold; [destinations] must not be empty and [selectedIndex] must be valid.
   const AdaptiveNavScaffold({
@@ -69,7 +71,7 @@ class AdaptiveNavScaffold extends StatefulWidget {
 
   /// Creates a scaffold from Material [NavigationDestination]s.
   ///
-  /// Only [Icon] widgets convert; other icon widgets fail an assert.
+  /// Only [Icon] widgets convert; other icon widgets throw an [ArgumentError].
   factory AdaptiveNavScaffold.fromNavigationBar({
     Key? key,
     required List<NavigationDestination> destinations,
@@ -138,7 +140,7 @@ class AdaptiveNavScaffold extends StatefulWidget {
   /// Placement policy; null means [ApplePolicy] on iOS and [MaterialPolicy] elsewhere.
   final NavPlacementPolicy? policy;
 
-  /// Draws the bar; null uses a minimal placeholder bar until the default bars ship.
+  /// Draws the bar; null uses [cupertinoBarBuilder] on iOS and macOS and [materialBarBuilder] elsewhere.
   final NavBarBuilder? barBuilder;
 
   /// Reserved for M2: draws the overflow menu. Accepted but unused; experimental.
@@ -166,30 +168,43 @@ class AdaptiveNavScaffold extends StatefulWidget {
   State<AdaptiveNavScaffold> createState() => _AdaptiveNavScaffoldState();
 }
 
-class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
-    with SingleTickerProviderStateMixin {
+class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold> {
   final GlobalKey _bodyKey = GlobalKey(debugLabel: 'AdaptiveNavScaffold.body');
-  late final AnimationController _fade = AnimationController(
-    vsync: this,
-    value: 1,
-  );
 
+  // Updated after each frame, never during build.
   NavLayout? _lastSeen;
+  Size? _lastSize;
   NavLayout? _lastReported;
   NavLayout? _pending;
-  Size? _lastSize;
   Timer? _settleTimer;
+  NavLayout? _frameLayout;
+  Size _frameSize = Size.zero;
+  bool _trackScheduled = false;
+
+  TargetPlatform get _platform => Theme.of(context).platform;
+
+  bool get _isApple =>
+      _platform == TargetPlatform.iOS || _platform == TargetPlatform.macOS;
 
   NavPlacementPolicy get _policy =>
       widget.policy ??
-      (defaultTargetPlatform == TargetPlatform.iOS
+      (_platform == TargetPlatform.iOS
           ? const ApplePolicy()
           : const MaterialPolicy());
 
   @override
+  void didUpdateWidget(AdaptiveNavScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.onLayoutChanged != widget.onLayoutChanged) {
+      _settleTimer?.cancel();
+      _pending = null;
+      _lastReported = _lastSeen;
+    }
+  }
+
+  @override
   void dispose() {
     _settleTimer?.cancel();
-    _fade.dispose();
     super.dispose();
   }
 
@@ -198,34 +213,45 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
       a.paneCount == b.paneCount &&
       a.posture == b.posture;
 
-  void _track(NavLayout layout, Size size, bool reduceMotion) {
+  /// Chooses the bar transition for [layout] by comparing with the last settled frame.
+  Duration _transitionFor(NavLayout layout, Size size, bool reduceMotion) {
     final seen = _lastSeen;
+    if (seen == null || seen.placement == layout.placement) {
+      return Duration.zero;
+    }
+    final t = widget.transitions;
+    final kind = seen.posture != layout.posture
+        ? t.onFoldChange
+        : (_lastSize != size ? t.onResize : NavTransition.instant);
+    final instant =
+        kind == NavTransition.instant ||
+        (t.respectReduceMotion && reduceMotion);
+    return instant ? Duration.zero : t.duration;
+  }
+
+  void _scheduleTrack(NavLayout layout, Size size) {
+    _frameLayout = layout;
+    _frameSize = size;
+    if (_trackScheduled) return;
+    _trackScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _trackScheduled = false;
+      if (!mounted) return;
+      _track(_frameLayout!, _frameSize);
+    });
+  }
+
+  void _track(NavLayout layout, Size size) {
     _lastSeen = layout;
-    final previousSize = _lastSize;
     _lastSize = size;
-    if (seen == null) {
+    final reported = _lastReported;
+    if (widget.onLayoutChanged == null || reported == null) {
       _lastReported = layout;
+      _settleTimer?.cancel();
+      _pending = null;
       return;
     }
-
-    if (seen.placement != layout.placement) {
-      final t = widget.transitions;
-      final kind = seen.posture != layout.posture
-          ? t.onFoldChange
-          : (previousSize != size ? t.onResize : NavTransition.instant);
-      final instant =
-          kind == NavTransition.instant ||
-          (t.respectReduceMotion && reduceMotion);
-      if (instant) {
-        _fade.value = 1;
-      } else {
-        _fade.duration = t.duration;
-        _fade.forward(from: 0);
-      }
-    }
-
-    if (widget.onLayoutChanged == null) return;
-    if (_sameKey(_lastReported!, layout)) {
+    if (_sameKey(reported, layout)) {
       _pending = null;
       _settleTimer?.cancel();
       return;
@@ -267,6 +293,7 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
         bottom: media.viewPadding.bottom,
       ),
       direction: direction,
+      textScale: media.textScaler.scale(1),
     );
     final layout = NavLayout(
       placement: placement,
@@ -276,11 +303,18 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
       onSelected: widget.onSelected,
       posture: signals.posture,
     );
-    _track(layout, signals.viewSize, media.disableAnimations);
+    final duration = _transitionFor(
+      layout,
+      signals.viewSize,
+      media.disableAnimations,
+    );
+    _scheduleTrack(layout, signals.viewSize);
 
     final bar =
         widget.barBuilder?.call(context, layout) ??
-        PlaceholderNavBar(layout: layout);
+        (_isApple
+            ? cupertinoBarBuilder(context, layout)
+            : materialBarBuilder(context, layout));
     final inset = _bodyInsets(geometry, signals.viewSize);
     final extend =
         widget.extendBodyBehindBar &&
@@ -304,7 +338,17 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
           ),
           Positioned.fromRect(
             rect: geometry.barRect,
-            child: FadeTransition(opacity: _fade, child: bar),
+            child: AnimatedSwitcher(
+              duration: duration,
+              layoutBuilder: (current, previous) => Stack(
+                fit: StackFit.expand,
+                children: [...previous, ?current],
+              ),
+              child: KeyedSubtree(
+                key: ValueKey<NavEdge>(placement.edge),
+                child: bar,
+              ),
+            ),
           ),
         ],
       ),
@@ -312,7 +356,8 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
   }
 
   /// Body media: the bar extent is removed from padding when the body is
-  /// inset, or added to it when the body runs under the bar.
+  /// inset, or added to it when the body runs under the bar. The bottom
+  /// keyboard inset is reduced by the bar height the body already clears.
   MediaQueryData _bodyMedia(
     MediaQueryData media,
     EdgeInsets inset,
@@ -331,9 +376,16 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
             inset.right > 0 ? 0 : p.right,
             inset.bottom > 0 ? 0 : p.bottom,
           );
+    final insets = media.viewInsets;
     return media.copyWith(
       padding: adjust(media.padding),
       viewPadding: adjust(media.viewPadding),
+      viewInsets: EdgeInsets.fromLTRB(
+        insets.left,
+        insets.top,
+        insets.right,
+        extend ? insets.bottom : math.max(0, insets.bottom - inset.bottom),
+      ),
     );
   }
 

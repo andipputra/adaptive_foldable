@@ -48,6 +48,7 @@ class NavAction {
   NavAction copyWith({
     IconData? icon,
     String? sfSymbol,
+    bool clearSfSymbol = false,
     String? label,
     VoidCallback? onPressed,
     NavPriority? priority,
@@ -55,16 +56,17 @@ class NavAction {
     bool? enabled,
     bool? selected,
     int? badgeCount,
+    bool clearBadgeCount = false,
   }) => NavAction(
     icon: icon ?? this.icon,
-    sfSymbol: sfSymbol ?? this.sfSymbol,
+    sfSymbol: clearSfSymbol ? null : (sfSymbol ?? this.sfSymbol),
     label: label ?? this.label,
     onPressed: onPressed ?? this.onPressed,
     priority: priority ?? this.priority,
     isDestructive: isDestructive ?? this.isDestructive,
     enabled: enabled ?? this.enabled,
     selected: selected ?? this.selected,
-    badgeCount: badgeCount ?? this.badgeCount,
+    badgeCount: clearBadgeCount ? null : (badgeCount ?? this.badgeCount),
   );
 
   @override
