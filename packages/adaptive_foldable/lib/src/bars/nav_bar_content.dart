@@ -2,6 +2,7 @@ import 'package:adaptive_foldable/src/bars/bar_strings.dart';
 import 'package:adaptive_foldable/src/bars/nav_bar_item.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/nav_layout.dart';
+import 'package:flutter/semantics.dart' show OrdinalSortKey;
 import 'package:flutter/widgets.dart';
 
 /// Back arrow glyph (Material Icons `arrow_back`, mirrored in right-to-left).
@@ -105,7 +106,7 @@ List<Widget> buildNavBarItems(
       ),
   ];
   final fading = layout.actionsOpacity < 1;
-  return [
+  final ordered = <Widget>[
     for (final w in leading)
       fading
           ? IgnorePointer(
@@ -113,9 +114,33 @@ List<Widget> buildNavBarItems(
               child: Opacity(opacity: layout.actionsOpacity, child: w),
             )
           : w,
-    if (tabsExpand) ...[for (final t in tabs) Expanded(child: t)] else ...tabs,
+    ...tabs,
+  ];
+  // Screen reader and keyboard order follow the visual order: Back, prominent
+  // action, groups, overflow, tabs; it does not change with text direction.
+  final tabStart = ordered.length - tabs.length;
+  return [
+    for (var i = 0; i < ordered.length; i++)
+      _inOrder(
+        i,
+        i >= tabStart && tabsExpand ? Expanded(child: ordered[i]) : ordered[i],
+        expanded: i >= tabStart && tabsExpand,
+      ),
   ];
 }
+
+Widget _inOrder(int index, Widget child, {required bool expanded}) {
+  final item = child is Expanded ? child.child : child;
+  final ordered = FocusTraversalOrder(
+    order: NumericFocusOrder(index.toDouble()),
+    child: Semantics(sortKey: OrdinalSortKey(index.toDouble()), child: item),
+  );
+  return expanded ? Expanded(child: ordered) : ordered;
+}
+
+/// Wraps a default bar's items so Tab follows the order given by [buildNavBarItems].
+Widget navBarTraversalGroup({required Widget child}) =>
+    FocusTraversalGroup(policy: OrderedTraversalPolicy(), child: child);
 
 /// The ellipsis control; reports its own global rectangle when tapped.
 class _OverflowItem extends StatelessWidget {

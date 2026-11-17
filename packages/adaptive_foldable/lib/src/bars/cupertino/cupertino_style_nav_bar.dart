@@ -18,7 +18,10 @@ class CupertinoStyleNavBar extends StatelessWidget {
   final NavBarColors? colors;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      navBarTraversalGroup(child: _build(context));
+
+  Widget _build(BuildContext context) {
     final colors = this.colors ?? defaultColors(context);
     final items = buildNavBarItems(
       layout,

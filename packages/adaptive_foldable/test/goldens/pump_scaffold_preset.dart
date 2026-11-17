@@ -20,6 +20,7 @@ Future<void> pumpScaffoldPreset(
   required NavBarBuilder barBuilder,
   required NavPlacementPolicy policy,
   TextDirection direction = TextDirection.ltr,
+  Widget? body,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = preset.viewSize;
@@ -42,10 +43,12 @@ Future<void> pumpScaffoldPreset(
         policy: policy,
         barBuilder: barBuilder,
         debugOverlay: false,
-        body: const Material(
-          color: Color(0xFFF3F3F3),
-          child: Center(child: Text('Body')),
-        ),
+        body:
+            body ??
+            const Material(
+              color: Color(0xFFF3F3F3),
+              child: Center(child: Text('Body')),
+            ),
       ),
     ),
   );

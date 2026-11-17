@@ -3,6 +3,8 @@ import 'dart:ui' show CheckedState, Rect, Tristate;
 
 import 'package:adaptive_foldable/adaptive_foldable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show DebugSemanticsDumpOrder;
+import 'package:flutter/semantics.dart' show SemanticsNode;
 import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -50,6 +52,7 @@ Future<int?> _pump(
 }
 
 void main() {
+  accessibilityTests();
   for (final entry in {
     'material': materialBarBuilder,
     'cupertino': cupertinoBarBuilder,
@@ -312,6 +315,147 @@ void main() {
         policy: const MaterialPolicy(),
       );
       expect(tester.getTopLeft(find.text('Home')).dx, lessThan(100));
+    });
+  });
+}
+
+class _A11y {
+  static NavLayout layout({
+    int tabs = 3,
+    int actions = 4,
+    bool compressed = false,
+  }) => NavLayout(
+    placement: const NavPlacement(NavEdge.bottom),
+    geometry: const NavGeometry(
+      barRect: Rect.fromLTWH(0, 700, 400, 100),
+      itemAxis: NavAxis.horizontal,
+    ),
+    showBack: true,
+    onBack: () {},
+    prominentAction: NavAction(
+      icon: Icons.check,
+      label: 'Done',
+      onPressed: () {},
+    ),
+    visibleActions: [
+      NavActionGroup([
+        for (var i = 0; i < actions; i++)
+          NavAction(icon: Icons.star, label: 'Act$i', onPressed: () {}),
+      ]),
+    ],
+    destinations: [
+      for (var i = 0; i < tabs; i++)
+        NavDestination(icon: Icons.home, label: 'Tab$i'),
+    ],
+    tabsCompressed: compressed,
+  );
+}
+
+void accessibilityTests() {
+  group('accessibility', () {
+    for (final entry in {
+      'material': materialBarBuilder,
+      'cupertino': cupertinoBarBuilder,
+    }.entries) {
+      testWidgets(
+        '${entry.key}: semantics order is Back, prominent, groups, tabs',
+        (tester) async {
+          final handle = tester.ensureSemantics();
+          await tester.pumpWidget(
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: MaterialApp(
+                home: Material(
+                  child: Builder(
+                    builder: (c) => entry.value(c, _A11y.layout()),
+                  ),
+                ),
+              ),
+            ),
+          );
+          final order = <String>[];
+          final root = tester.getSemantics(
+            find.byType(Scaffold).evaluate().isEmpty
+                ? find.byType(Material).first
+                : find.byType(Scaffold).first,
+          );
+          void walk(SemanticsNode n) {
+            if (n.label.isNotEmpty) order.add(n.label);
+            for (final c in n.debugListChildrenInOrder(
+              DebugSemanticsDumpOrder.traversalOrder,
+            )) {
+              walk(c);
+            }
+          }
+
+          walk(root);
+          final labels = [
+            'Back',
+            'Done',
+            'Act0',
+            'Act1',
+            'Act2',
+            'Act3',
+            'Tab0',
+            'Tab1',
+            'Tab2',
+          ];
+          expect(order.where(labels.contains).toList(), labels);
+          handle.dispose();
+        },
+      );
+    }
+
+    testWidgets('every item has a 44x44 minimum target', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Material(
+            child: Builder(
+              builder: (c) => materialBarBuilder(c, _A11y.layout()),
+            ),
+          ),
+        ),
+      );
+      for (final l in ['Back', 'Done', 'Act0', 'Tab0']) {
+        final box = tester.getSize(
+          find
+              .ancestor(of: find.text(l), matching: find.byType(ConstrainedBox))
+              .first,
+        );
+        expect(box.width, greaterThanOrEqualTo(44), reason: l);
+        expect(box.height, greaterThanOrEqualTo(44), reason: l);
+      }
+    });
+
+    testWidgets('Tab key visits items in visual order', (tester) async {
+      final seen = <String>[];
+      final layout = NavLayout(
+        placement: const NavPlacement(NavEdge.bottom),
+        geometry: const NavGeometry(
+          barRect: Rect.fromLTWH(0, 700, 400, 100),
+          itemAxis: NavAxis.horizontal,
+        ),
+        prominentAction: NavAction(
+          icon: Icons.check,
+          label: 'Done',
+          onPressed: () => seen.add('Done'),
+        ),
+        destinations: const [NavDestination(icon: Icons.home, label: 'Tab0')],
+        onSelected: (_) => seen.add('Tab0'),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Material(
+            child: Builder(builder: (c) => materialBarBuilder(c, layout)),
+          ),
+        ),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(seen, ['Done', 'Tab0']);
     });
   });
 }

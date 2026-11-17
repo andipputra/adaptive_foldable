@@ -93,6 +93,7 @@ class Page extends StatelessWidget {
 }
 
 void main() {
+  dynamicTypeTests();
   group('registry', () {
     testWidgets('publishes actions to the bar', (tester) async {
       await pump(tester, Page('A', actions: [act('Share', null)]));
@@ -396,5 +397,58 @@ void main() {
       expect(dimmed, isEmpty);
       await tester.pumpAndSettle();
     });
+  });
+}
+
+void dynamicTypeTests() {
+  group('Dynamic Type', () {
+    for (final scale in [1.0, 1.5, 2.0, 3.0]) {
+      testWidgets('scale $scale: no overflow errors, labels not clipped', (
+        tester,
+      ) async {
+        final s = sig(const Size(400, 800));
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = s.viewSize;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (c, child) => MediaQuery(
+              data: MediaQuery.of(c)
+                  .copyWith(textScaler: TextScaler.linear(scale)),
+              child: FoldSignalsScope(override: s, child: child!),
+            ),
+            home: AdaptiveNavScaffold(
+              destinations: _dests,
+              selectedIndex: 0,
+              onSelected: (_) {},
+              policy: const ApplePolicy(),
+              body: Page(
+                'A',
+                actions: [for (var i = 0; i < 6; i++) act('Act$i', null)],
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+        final visible = [for (var i = 0; i < 6; i++) find.text('Act$i')]
+            .where((f) => f.evaluate().isNotEmpty)
+            .length;
+        if (scale >= 2) {
+          expect(visible, lessThan(6));
+          expect(find.text('More'), findsOneWidget);
+        }
+        for (final label in ['Home', 'Inbox']) {
+          final box = tester.getRect(find.text(label));
+          expect(
+            box.bottom,
+            lessThanOrEqualTo(800),
+            reason: '$label at $scale',
+          );
+          expect(box.right, lessThanOrEqualTo(400), reason: '$label at $scale');
+        }
+      });
+    }
   });
 }

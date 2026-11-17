@@ -22,9 +22,11 @@ class MaterialNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolved = colors ?? defaultColors(context);
-    return layout.placement.isVertical
-        ? MaterialRail(layout: layout, colors: resolved)
-        : MaterialBottomBar(layout: layout, colors: resolved);
+    return navBarTraversalGroup(
+      child: layout.placement.isVertical
+          ? MaterialRail(layout: layout, colors: resolved)
+          : MaterialBottomBar(layout: layout, colors: resolved),
+    );
   }
 
   /// Header strip for `layout.headerActions`, placed by the app at the top of its page.
