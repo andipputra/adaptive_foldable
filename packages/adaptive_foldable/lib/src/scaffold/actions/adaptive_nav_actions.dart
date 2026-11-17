@@ -88,7 +88,11 @@ class _AdaptiveNavActionsState extends State<AdaptiveNavActions> {
     final changed = !next.sameContentAs(_entry.actions);
     // Always keep the latest callbacks; only a visible change needs a repaint.
     _entry.actions = next;
-    if (changed) _registry?.markChanged();
+    if (changed) {
+      _registry?.markChanged();
+    } else {
+      _registry?.markCallbacksChanged();
+    }
   }
 
   void _listenTo(Animation<double>? animation, Animation<double>? secondary) {

@@ -73,7 +73,12 @@ class NavActionRegistry extends ChangeNotifier {
   final List<NavActionEntry> _entries = [];
   int _nextOrder = 0;
   bool _scheduled = false;
+  bool _contentChanged = false;
   bool _disposed = false;
+
+  /// Whether the notification being delivered follows a change in what the pages publish,
+  /// as opposed to a callback-only refresh.
+  bool get contentChanged => _contentChanged;
 
   /// Adds [entry] above all earlier entries.
   void register(NavActionEntry entry) {
@@ -132,13 +137,18 @@ class NavActionRegistry extends ChangeNotifier {
     );
   }
 
+  /// Asks the scaffold to rebuild with the entries' latest callbacks, without any fade or menu reset.
+  void markCallbacksChanged() => markChanged(contentChanged: false);
+
   /// Notifies listeners after the current frame; repeated calls in one frame coalesce.
-  void markChanged() {
+  void markChanged({bool contentChanged = true}) {
+    if (contentChanged) _contentChanged = true;
     if (_scheduled || _disposed) return;
     _scheduled = true;
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _scheduled = false;
       if (!_disposed) notifyListeners();
+      _contentChanged = false;
     });
     SchedulerBinding.instance.ensureVisualUpdate();
   }

@@ -172,6 +172,10 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
   /// Runs after a frame in which pages registered, changed or went on or off stage.
   void _onRegistryChanged() {
     if (!mounted) return;
+    if (!_registry.contentChanged) {
+      setState(() {});
+      return;
+    }
     final view = _registry.viewFor(NavPaneScope.mainPane);
     final entry = view.entry;
     final settled = entry == null || entry.progress >= 1;
@@ -396,7 +400,12 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
           final covered =
               scaffoldCovered || (view.entry?.isCoveredByOverlay ?? false);
           final overflowed = composed.overflowedActions;
-          final anchor = overflowed.isEmpty ? null : _menuAnchor;
+          if (overflowed.isEmpty && _menuAnchor != null) {
+            // Nothing to show any more: forget the anchor so the menu cannot
+            // come back on its own and system Back is not swallowed.
+            _menuAnchor = null;
+          }
+          final anchor = _menuAnchor;
           return PopScope(
             canPop: anchor == null,
             onPopInvokedWithResult: (didPop, _) {

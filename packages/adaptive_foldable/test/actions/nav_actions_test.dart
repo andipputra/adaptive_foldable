@@ -661,6 +661,65 @@ void reviewRegressionTests() {
       },
     );
 
+    testWidgets('an action always runs the callback from the latest build', (
+      tester,
+    ) async {
+      var count = 0;
+      late StateSetter set;
+      await pump(
+        tester,
+        StatefulBuilder(
+          builder: (c, s) {
+            set = s;
+            final captured = count;
+            return Page(
+              'A',
+              actions: [act('Count', () => count = captured + 1)],
+            );
+          },
+        ),
+      );
+      await tester.tap(find.text('Count'));
+      expect(count, 1);
+      set(() {});
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.text('Count'));
+      expect(count, 2, reason: 'stale closure would reset to 1');
+    });
+
+    testWidgets(
+      'overflow menu does not reopen after overflow disappears and returns',
+      (tester) async {
+        final s = sig(const Size(400, 800));
+        await pump(
+          tester,
+          Page('A', actions: [for (var i = 0; i < 8; i++) act('Act$i', null)]),
+          signals: s,
+        );
+        await tester.tap(find.text('More'));
+        await tester.pump();
+        expect(find.text('Act7'), findsOneWidget, reason: 'open menu lists it');
+
+        tester.view.physicalSize = const Size(1500, 800);
+        s.update(viewSize: const Size(1500, 800));
+        await tester.pump();
+        await tester.pump();
+        expect(find.text('More'), findsNothing, reason: 'everything fits');
+
+        tester.view.physicalSize = const Size(400, 800);
+        s.update(viewSize: const Size(400, 800));
+        await tester.pump();
+        await tester.pump();
+        expect(find.text('More'), findsOneWidget);
+        expect(
+          find.text('Act7'),
+          findsNothing,
+          reason: 'menu must stay closed',
+        );
+      },
+    );
+
     test('PageActions ignores onPressed identity but sees visible changes', () {
       PageActions of(String label, {int? badge}) => PageActions(
         groups: [
