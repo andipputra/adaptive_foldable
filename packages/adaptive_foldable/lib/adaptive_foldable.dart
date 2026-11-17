@@ -1,6 +1,10 @@
 /// A design-agnostic Flutter navigation scaffold with a fold kit.
 library;
 
+export 'package:adaptive_foldable/src/bars/cupertino/cupertino_style_nav_bar.dart'
+    show CupertinoStyleNavBar, cupertinoBarBuilder;
+export 'package:adaptive_foldable/src/bars/material/material_nav_bar.dart'
+    show MaterialNavBar, materialBarBuilder;
 export 'package:adaptive_foldable/src/debug/debug_report.dart'
     show formatSignalsReport;
 export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
