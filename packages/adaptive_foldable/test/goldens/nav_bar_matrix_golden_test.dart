@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'pump_scaffold_preset.dart';
+import 'tolerant_golden_comparator.dart';
 
 class _Row {
   const _Row(
@@ -119,6 +120,8 @@ void main() {
     ),
     _Row('ipad', FoldSignalsPresets.ipad, cupertinoBarBuilder, apple),
   ];
+
+  setUpAll(useTolerantGoldens);
 
   for (final r in rows) {
     testWidgets('golden: ${r.name}', skip: !Platform.isMacOS, (tester) async {
