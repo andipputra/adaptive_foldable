@@ -16,6 +16,7 @@ export 'package:adaptive_foldable/src/model/nav_layout.dart';
 export 'package:adaptive_foldable/src/model/nav_placement.dart';
 export 'package:adaptive_foldable/src/model/nav_priority.dart';
 export 'package:adaptive_foldable/src/policy/apple_policy.dart';
+export 'package:adaptive_foldable/src/policy/material_policy.dart';
 export 'package:adaptive_foldable/src/policy/nav_placement_policy.dart';
 export 'package:adaptive_foldable/src/signals/fake_fold_signals.dart';
 export 'package:adaptive_foldable/src/signals/fold_signals.dart'
