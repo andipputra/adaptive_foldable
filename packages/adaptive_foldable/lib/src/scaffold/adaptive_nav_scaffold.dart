@@ -14,13 +14,12 @@ import 'package:adaptive_foldable/src/model/nav_layout.dart';
 import 'package:adaptive_foldable/src/policy/apple_policy.dart';
 import 'package:adaptive_foldable/src/policy/material_policy.dart';
 import 'package:adaptive_foldable/src/policy/nav_placement_policy.dart';
-import 'package:adaptive_foldable/src/scaffold/nav_adapters.dart';
 import 'package:adaptive_foldable/src/scaffold/nav_transitions.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals_scope.dart';
 import 'package:adaptive_foldable/src/signals/signal_types.dart';
-import 'package:flutter/material.dart'
-    show BottomNavigationBarItem, NavigationDestination, Theme;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/widgets.dart';
 
 /// Draws the navigation bar for a resolved [NavLayout].
@@ -68,62 +67,6 @@ class AdaptiveNavScaffold extends StatefulWidget {
          selectedIndex >= 0 && selectedIndex < destinations.length,
          'selectedIndex is out of range',
        );
-
-  /// Creates a scaffold from Material [NavigationDestination]s.
-  ///
-  /// Only [Icon] widgets convert; other icon widgets throw an [ArgumentError].
-  factory AdaptiveNavScaffold.fromNavigationBar({
-    Key? key,
-    required List<NavigationDestination> destinations,
-    required int selectedIndex,
-    required ValueChanged<int> onSelected,
-    required Widget body,
-    NavPlacementPolicy? policy,
-    NavBarBuilder? barBuilder,
-    NavTransitions transitions = const NavTransitions(),
-    bool debugOverlay = false,
-    NavLayoutChanged? onLayoutChanged,
-    bool extendBodyBehindBar = false,
-  }) => AdaptiveNavScaffold(
-    key: key,
-    destinations: destinationsFromNavigationDestinations(destinations),
-    selectedIndex: selectedIndex,
-    onSelected: onSelected,
-    body: body,
-    policy: policy,
-    barBuilder: barBuilder,
-    transitions: transitions,
-    debugOverlay: debugOverlay,
-    onLayoutChanged: onLayoutChanged,
-    extendBodyBehindBar: extendBodyBehindBar,
-  );
-
-  /// Creates a scaffold from [BottomNavigationBarItem]s; each needs a label and an [Icon].
-  factory AdaptiveNavScaffold.fromBottomNavigationBar({
-    Key? key,
-    required List<BottomNavigationBarItem> items,
-    required int selectedIndex,
-    required ValueChanged<int> onSelected,
-    required Widget body,
-    NavPlacementPolicy? policy,
-    NavBarBuilder? barBuilder,
-    NavTransitions transitions = const NavTransitions(),
-    bool debugOverlay = false,
-    NavLayoutChanged? onLayoutChanged,
-    bool extendBodyBehindBar = false,
-  }) => AdaptiveNavScaffold(
-    key: key,
-    destinations: destinationsFromBottomNavigationBarItems(items),
-    selectedIndex: selectedIndex,
-    onSelected: onSelected,
-    body: body,
-    policy: policy,
-    barBuilder: barBuilder,
-    transitions: transitions,
-    debugOverlay: debugOverlay,
-    onLayoutChanged: onLayoutChanged,
-    extendBodyBehindBar: extendBodyBehindBar,
-  );
 
   /// The tabs.
   final List<NavDestination> destinations;
@@ -181,7 +124,7 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold> {
   Size _frameSize = Size.zero;
   bool _trackScheduled = false;
 
-  TargetPlatform get _platform => Theme.of(context).platform;
+  TargetPlatform get _platform => defaultTargetPlatform;
 
   bool get _isApple =>
       _platform == TargetPlatform.iOS || _platform == TargetPlatform.macOS;

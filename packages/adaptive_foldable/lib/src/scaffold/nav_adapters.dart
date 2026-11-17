@@ -1,6 +1,4 @@
 import 'package:adaptive_foldable/src/model/nav_destination.dart';
-import 'package:flutter/material.dart'
-    show BottomNavigationBarItem, NavigationDestination;
 import 'package:flutter/widgets.dart';
 
 IconData _iconOf(Widget widget, String what) {
@@ -13,46 +11,36 @@ IconData _iconOf(Widget widget, String what) {
   );
 }
 
-/// Converts Material [NavigationDestination]s to [NavDestination]s.
+/// Builds a [NavDestination] from the icon widgets an existing navigation bar already uses.
 ///
-/// Only [Icon] widgets carry an [IconData]; any other icon widget throws an
-/// [ArgumentError]. `enabled`, `tooltip` and `badge` of the source are not carried over.
-List<NavDestination> destinationsFromNavigationDestinations(
-  List<NavigationDestination> items,
-) => [
-  for (final d in items)
-    NavDestination(
-      icon: _iconOf(d.icon, 'NavigationDestination.icon'),
-      selectedIcon: d.selectedIcon == null
-          ? null
-          : _iconOf(d.selectedIcon!, 'NavigationDestination.selectedIcon'),
-      label: d.label,
-    ),
-];
-
-/// Converts [BottomNavigationBarItem]s to [NavDestination]s.
+/// Migration helper for `NavigationDestination(icon:, selectedIcon:, label:)` and
+/// `BottomNavigationBarItem(icon:, activeIcon:, label:)` lists:
 ///
-/// Every item needs a non-empty label (checked with an [ArgumentError]); only
-/// [Icon] widgets can be converted. `tooltip` and `backgroundColor` are not carried over.
-List<NavDestination> destinationsFromBottomNavigationBarItems(
-  List<BottomNavigationBarItem> items,
-) => [
-  for (final i in items)
-    NavDestination(
-      icon: _iconOf(i.icon, 'BottomNavigationBarItem.icon'),
-      selectedIcon: _iconOf(i.activeIcon, 'BottomNavigationBarItem.activeIcon'),
-      label: _labelOf(i),
-    ),
-];
-
-String _labelOf(BottomNavigationBarItem item) {
-  final label = item.label;
-  if (label == null || label.isEmpty) {
-    throw ArgumentError.value(
-      item,
-      'item',
-      'BottomNavigationBarItem needs a label',
-    );
+/// ```dart
+/// destinations: [
+///   for (final d in oldDestinations)
+///     navDestinationFromIcons(icon: d.icon, selectedIcon: d.selectedIcon, label: d.label),
+/// ]
+/// ```
+///
+/// Only [Icon] widgets carry an [IconData]; any other widget throws an
+/// [ArgumentError], as does an empty [label]. Tooltips, badges and enabled
+/// state of the source are not carried over.
+NavDestination navDestinationFromIcons({
+  required Widget icon,
+  Widget? selectedIcon,
+  required String label,
+  int? badgeCount,
+}) {
+  if (label.isEmpty) {
+    throw ArgumentError.value(label, 'label', 'must not be empty');
   }
-  return label;
+  return NavDestination(
+    icon: _iconOf(icon, 'icon'),
+    selectedIcon: selectedIcon == null
+        ? null
+        : _iconOf(selectedIcon, 'selectedIcon'),
+    label: label,
+    badgeCount: badgeCount,
+  );
 }

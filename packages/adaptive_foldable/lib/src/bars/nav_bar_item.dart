@@ -1,5 +1,4 @@
 import 'package:adaptive_foldable/src/bars/bar_strings.dart';
-import 'package:flutter/material.dart' show Tooltip;
 import 'package:flutter/widgets.dart';
 
 /// Smallest tap target in logical pixels.
@@ -11,8 +10,8 @@ const Color kDestructiveColor = Color(0xFFB3261E);
 /// One tappable icon-and-label entry shared by the default bars.
 ///
 /// Draws the icon, label and optional badge with a tap target of at least
-/// [kMinTapTarget] on both axes, one merged semantics node, a tooltip carrying
-/// the label, and keyboard focus with a visible highlight.
+/// [kMinTapTarget] on both axes, one merged semantics node whose label doubles
+/// as the tooltip, and keyboard focus with a visible highlight.
 class NavBarItem extends StatefulWidget {
   /// Creates an item.
   const NavBarItem({
@@ -118,6 +117,7 @@ class _NavBarItemState extends State<NavBarItem> {
       selected: w.isSelectable ? w.selected : null,
       checked: !w.isSelectable && w.isToggle ? w.selected : null,
       label: w.label,
+      tooltip: w.label,
       value: value.isEmpty ? null : value,
       onTap: w.enabled ? w.onTap : null,
       excludeSemantics: true,
@@ -134,48 +134,44 @@ class _NavBarItemState extends State<NavBarItem> {
             },
           ),
         },
-        child: Tooltip(
-          message: w.label,
-          excludeFromSemantics: true,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: w.enabled ? w.onTap : null,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: _focused
-                    ? Border.all(color: w.activeColor, width: 2)
-                    : null,
-                color: highlighted && !_focused
-                    ? w.activeColor.withValues(alpha: 0.08)
-                    : null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: w.enabled ? w.onTap : null,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: _focused
+                  ? Border.all(color: w.activeColor, width: 2)
+                  : null,
+              color: highlighted && !_focused
+                  ? w.activeColor.withValues(alpha: 0.08)
+                  : null,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: kMinTapTarget,
+                minHeight: kMinTapTarget,
               ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minWidth: kMinTapTarget,
-                  minHeight: kMinTapTarget,
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      glyph,
-                      const SizedBox(height: 2),
-                      Text(
-                        w.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: TextDecoration.none,
-                          color: color,
-                          fontWeight: w.selected
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    glyph,
+                    const SizedBox(height: 2),
+                    Text(
+                      w.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        decoration: TextDecoration.none,
+                        color: color,
+                        fontWeight: w.selected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -1,5 +1,5 @@
+// ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
-import 'package:adaptive_foldable/src/scaffold/nav_adapters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -264,94 +264,66 @@ void main() {
     });
   });
 
-  group('migration adapters', () {
-    test('NavigationDestination list converts', () {
-      final out = destinationsFromNavigationDestinations(const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        NavigationDestination(icon: Icon(Icons.inbox), label: 'Inbox'),
-      ]);
-      expect(out[0].icon, Icons.home_outlined);
-      expect(out[0].selectedIcon, Icons.home);
-      expect(out[0].label, 'Home');
-      expect(out[1].selectedIcon, isNull);
+  group('migration helper', () {
+    test('converts Icon widgets', () {
+      final d = navDestinationFromIcons(
+        icon: const Icon(Icons.home_outlined),
+        selectedIcon: const Icon(Icons.home),
+        label: 'Home',
+        badgeCount: 2,
+      );
+      expect(d.icon, Icons.home_outlined);
+      expect(d.selectedIcon, Icons.home);
+      expect(d.label, 'Home');
+      expect(d.badgeCount, 2);
+      expect(
+        navDestinationFromIcons(
+          icon: const Icon(Icons.inbox),
+          label: 'I',
+        ).selectedIcon,
+        isNull,
+      );
     });
 
-    test('BottomNavigationBarItem list converts', () {
-      final out = destinationsFromBottomNavigationBarItems(const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Home',
-        ),
-      ]);
-      expect(out.single.icon, Icons.home_outlined);
-      expect(out.single.selectedIcon, Icons.home);
+    test('converts the fields of real Material destinations', () {
+      const nd = NavigationDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home),
+        label: 'Home',
+      );
+      final d = navDestinationFromIcons(
+        icon: nd.icon,
+        selectedIcon: nd.selectedIcon,
+        label: nd.label,
+      );
+      expect(d.selectedIcon, Icons.home);
+      const bi = BottomNavigationBarItem(
+        icon: Icon(Icons.home_outlined),
+        activeIcon: Icon(Icons.home),
+        label: 'Home',
+      );
+      expect(
+        navDestinationFromIcons(
+          icon: bi.icon,
+          selectedIcon: bi.activeIcon,
+          label: bi.label!,
+        ).icon,
+        Icons.home_outlined,
+      );
     });
 
     test('non-Icon widgets are rejected', () {
       expect(
-        () => destinationsFromNavigationDestinations(const [
-          NavigationDestination(icon: SizedBox(), label: 'X'),
-        ]),
+        () => navDestinationFromIcons(icon: const SizedBox(), label: 'X'),
         throwsArgumentError,
       );
     });
 
-    test('label-less items are rejected', () {
+    test('empty labels are rejected', () {
       expect(
-        () => destinationsFromBottomNavigationBarItems(const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-        ]),
+        () => navDestinationFromIcons(icon: const Icon(Icons.home), label: ''),
         throwsArgumentError,
       );
-    });
-
-    testWidgets('both factories build a working scaffold', (tester) async {
-      final s = _sig();
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = s.viewSize;
-      addTearDown(tester.view.reset);
-      await tester.pumpWidget(
-        MaterialApp(
-          builder: (c, child) => FoldSignalsScope(override: s, child: child!),
-          home: Column(
-            children: [
-              Expanded(
-                child: AdaptiveNavScaffold.fromNavigationBar(
-                  destinations: const [
-                    NavigationDestination(
-                      icon: Icon(Icons.home),
-                      label: 'Alpha',
-                    ),
-                  ],
-                  selectedIndex: 0,
-                  onSelected: (_) {},
-                  body: const SizedBox(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-      expect(find.text('Alpha'), findsOneWidget);
-      await tester.pumpWidget(
-        MaterialApp(
-          builder: (c, child) => FoldSignalsScope(override: s, child: child!),
-          home: AdaptiveNavScaffold.fromBottomNavigationBar(
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beta'),
-            ],
-            selectedIndex: 0,
-            onSelected: (_) {},
-            body: const SizedBox(),
-          ),
-        ),
-      );
-      expect(find.text('Beta'), findsOneWidget);
     });
   });
 

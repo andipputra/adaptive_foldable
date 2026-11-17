@@ -2,8 +2,16 @@ import 'package:adaptive_foldable/src/bars/bar_strings.dart';
 import 'package:adaptive_foldable/src/bars/nav_bar_item.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/nav_layout.dart';
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
+
+/// Back arrow glyph (Material Icons `arrow_back`, mirrored in right-to-left).
+///
+/// Needs the Material Icons font, which Flutter bundles when `uses-material-design` is true (the default).
+const IconData kBackIcon = IconData(
+  0xe092,
+  fontFamily: 'MaterialIcons',
+  matchTextDirection: true,
+);
 
 /// Colours a default bar applies to its items.
 class NavBarColors {
@@ -13,6 +21,7 @@ class NavBarColors {
     required this.active,
     required this.inactive,
     this.indicator,
+    this.border,
   });
 
   /// Bar background.
@@ -26,6 +35,9 @@ class NavBarColors {
 
   /// Pill behind the selected icon, or null.
   final Color? indicator;
+
+  /// Hairline between the bar and the body, or null.
+  final Color? border;
 }
 
 /// Builds the items of a default bar in Apple's order: Back, prominent action, groups, tabs.
@@ -52,7 +64,7 @@ List<Widget> buildNavBarItems(
   final leading = <Widget>[
     if (layout.showBack)
       NavBarItem(
-        icon: Icons.arrow_back,
+        icon: kBackIcon,
         label: BarStrings.back,
         selected: false,
         isSelectable: false,

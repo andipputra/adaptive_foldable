@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'dart:ui' show CheckedState, Rect, Tristate;
 
 import 'package:adaptive_foldable/adaptive_foldable.dart';
@@ -260,13 +261,18 @@ void main() {
       expect(tapped, isNotNull);
     });
 
-    testWidgets('tooltip carries the label', (tester) async {
+    testWidgets('semantics tooltip carries the label', (tester) async {
+      final handle = tester.ensureSemantics();
       await _pump(
         tester,
         FakeFoldSignals.from(FoldSignalsPresets.regularIphone),
         materialBarBuilder,
       );
-      expect(find.byTooltip('Home'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Home')).tooltip,
+        'Home',
+      );
+      handle.dispose();
     });
 
     testWidgets('large text scale grows the bottom bar, no overflow', (
