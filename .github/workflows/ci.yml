@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    branches:
+      - main
+      - development
+    paths-ignore:
+      - '**.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Flutter stable (latest)
+            channel: stable
+            flutter-version: any
+            runs-on: macos-latest
+            run-goldens: true
+          - name: Flutter floor (3.47.0)
+            channel: stable
+            flutter-version: '3.47.0'
+            runs-on: macos-latest
+            run-goldens: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: ${{ matrix.channel }}
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true
+
+      - name: Verify Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze code
+        run: flutter analyze
+
+      - name: Check layer boundaries
+        run: dart run tool/check_layer_boundaries.dart
+
+      - name: Run tooling tests
+        run: flutter test tool/test
+
+      - name: Run package unit tests
+        run: (cd packages/adaptive_foldable && flutter test)
+
+      - name: Run golden tests (macOS only)
+        if: matrix.run-goldens == true
+        run: |
+          if [ -d packages/adaptive_foldable/test/goldens ]; then
+            (cd packages/adaptive_foldable && flutter test test/goldens)
+          else
+            echo "Golden tests directory not yet created (skipping)"
+          fi

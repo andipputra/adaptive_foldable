@@ -5,13 +5,13 @@
 Pod::Spec.new do |s|
   s.name             = 'adaptive_foldable'
   s.version          = '0.0.1'
-  s.summary          = 'A new Flutter plugin project.'
+  s.summary          = 'Fold, posture, and size-class signals for adaptive Flutter navigation.'
   s.description      = <<-DESC
-A new Flutter plugin project.
+Streams iPhone Duo size classes, vertical bar edge, reserved regions, and hinge posture to Flutter.
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/andipputra/adaptive_foldable'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'adaptive_foldable contributors' => 'https://github.com/andipputra/adaptive_foldable/issues' }
   s.source           = { :path => '.' }
   s.source_files = 'adaptive_foldable/Sources/adaptive_foldable/**/*'
   s.dependency 'Flutter'
