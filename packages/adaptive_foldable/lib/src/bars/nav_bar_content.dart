@@ -13,6 +13,9 @@ const IconData kBackIcon = IconData(
   matchTextDirection: true,
 );
 
+/// More-horizontal glyph (Material Icons `more_horiz`) for the overflow control.
+const IconData kOverflowIcon = IconData(0xe404, fontFamily: 'MaterialIcons');
+
 /// Colours a default bar applies to its items.
 class NavBarColors {
   /// Creates a colour set.
@@ -75,9 +78,16 @@ List<Widget> buildNavBarItems(
     if (layout.prominentAction != null) action(layout.prominentAction!),
     for (final group in layout.visibleActions)
       for (final a in group.actions) action(a),
+    if (layout.onOverflow != null)
+      _OverflowItem(layout: layout, colors: colors),
   ];
+  final count = layout.destinations.length;
+  // Compressed tabs show only the selected destination; tapping moves to the next one.
+  final tabIndexes = layout.tabsCompressed
+      ? [layout.selectedIndex]
+      : [for (var i = 0; i < count; i++) i];
   final tabs = <Widget>[
-    for (var i = 0; i < layout.destinations.length; i++)
+    for (final i in tabIndexes)
       NavBarItem(
         icon: i == layout.selectedIndex
             ? layout.destinations[i].selectedIcon ?? layout.destinations[i].icon
@@ -86,14 +96,50 @@ List<Widget> buildNavBarItems(
         selected: i == layout.selectedIndex,
         badgeCount: layout.destinations[i].badgeCount,
         indicatorColor: colors.indicator,
-        position: BarStrings.tabPosition(i + 1, layout.destinations.length),
+        position: BarStrings.tabPosition(i + 1, count),
         activeColor: colors.active,
         inactiveColor: colors.inactive,
-        onTap: () => layout.onSelected?.call(i),
+        onTap: () => layout.onSelected?.call(
+          layout.tabsCompressed ? (i + 1) % count : i,
+        ),
       ),
   ];
+  final fading = layout.actionsOpacity < 1;
   return [
-    ...leading,
+    for (final w in leading)
+      fading
+          ? IgnorePointer(
+              ignoring: layout.actionsOpacity < 0.5,
+              child: Opacity(opacity: layout.actionsOpacity, child: w),
+            )
+          : w,
     if (tabsExpand) ...[for (final t in tabs) Expanded(child: t)] else ...tabs,
   ];
+}
+
+/// The ellipsis control; reports its own global rectangle when tapped.
+class _OverflowItem extends StatelessWidget {
+  const _OverflowItem({required this.layout, required this.colors});
+
+  final NavLayout layout;
+  final NavBarColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Builder(
+      builder: (context) => NavBarItem(
+        icon: kOverflowIcon,
+        label: BarStrings.overflow,
+        selected: false,
+        isSelectable: false,
+        activeColor: colors.active,
+        inactiveColor: colors.inactive,
+        onTap: () {
+          final box = context.findRenderObject() as RenderBox?;
+          if (box == null || !box.hasSize) return;
+          layout.onOverflow?.call(box.localToGlobal(Offset.zero) & box.size);
+        },
+      ),
+    );
+  }
 }

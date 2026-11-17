@@ -5,15 +5,21 @@ import 'package:adaptive_foldable/src/bars/cupertino/cupertino_style_nav_bar.dar
 import 'package:adaptive_foldable/src/bars/material/material_nav_bar.dart';
 import 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart';
 import 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
+import 'package:adaptive_foldable/src/layout/overflow_resolver.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/nav_axis.dart';
 import 'package:adaptive_foldable/src/model/nav_destination.dart';
 import 'package:adaptive_foldable/src/model/nav_geometry.dart';
 import 'package:adaptive_foldable/src/model/nav_insets.dart';
 import 'package:adaptive_foldable/src/model/nav_layout.dart';
+import 'package:adaptive_foldable/src/model/page_actions.dart';
 import 'package:adaptive_foldable/src/policy/apple_policy.dart';
 import 'package:adaptive_foldable/src/policy/material_policy.dart';
 import 'package:adaptive_foldable/src/policy/nav_placement_policy.dart';
+import 'package:adaptive_foldable/src/scaffold/actions/nav_action_registry.dart';
+import 'package:adaptive_foldable/src/scaffold/actions/nav_back_controller.dart';
+import 'package:adaptive_foldable/src/scaffold/actions/nav_overflow_menu.dart';
+import 'package:adaptive_foldable/src/scaffold/actions/nav_pane_scope.dart';
 import 'package:adaptive_foldable/src/scaffold/nav_transitions.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals_scope.dart';
@@ -34,10 +40,14 @@ typedef NavLayoutChanged = void Function(NavLayout previous, NavLayout next);
 /// the simulator in ANS-M1-013.
 const Duration kLayoutSettleDelay = Duration(milliseconds: 150);
 
-/// Draws the overflow menu for actions that did not fit; used from M2.
+/// Draws the overflow menu for the actions that did not fit.
+///
+/// [anchor] is the global rectangle of the overflow button; call [dismiss] to close the menu.
 typedef NavOverflowBuilder = Widget Function(
   BuildContext context,
-  List<NavAction> overflowed,
+  List<NavAction> items,
+  Rect anchor,
+  VoidCallback dismiss,
 );
 
 /// Places a navigation bar at the bottom or side edge and keeps the body in a fixed spot.
@@ -86,7 +96,7 @@ class AdaptiveNavScaffold extends StatefulWidget {
   /// Draws the bar; null uses [cupertinoBarBuilder] on iOS and macOS and [materialBarBuilder] elsewhere.
   final NavBarBuilder? barBuilder;
 
-  /// Reserved for M2: draws the overflow menu. Accepted but unused; experimental.
+  /// Draws the overflow menu; null uses the default Flutter-drawn menu.
   final NavOverflowBuilder? overflowBuilder;
 
   /// How layouts change visually.
@@ -111,8 +121,43 @@ class AdaptiveNavScaffold extends StatefulWidget {
   State<AdaptiveNavScaffold> createState() => _AdaptiveNavScaffoldState();
 }
 
-class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold> {
+class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
+    with SingleTickerProviderStateMixin {
   final GlobalKey _bodyKey = GlobalKey(debugLabel: 'AdaptiveNavScaffold.body');
+  final NavActionRegistry _registry = NavActionRegistry();
+  late final AnimationController _tabFade = AnimationController(
+    vsync: this,
+    value: 1,
+  );
+  NavActionEntry? _shownEntry;
+  Rect? _menuAnchor;
+  bool _reduceMotion = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _registry.addListener(_onRegistryChanged);
+  }
+
+  /// Runs after a frame in which pages registered, changed or went on or off stage.
+  void _onRegistryChanged() {
+    if (!mounted) return;
+    final view = _registry.viewFor(NavPaneScope.mainPane);
+    final entry = view.entry;
+    final settled = entry == null || entry.progress >= 1;
+    if (entry != _shownEntry && settled && _shownEntry != null) {
+      _tabFade
+        ..duration = widget.transitions.duration
+        ..value = _reduceMotion ? 1 : 0;
+      if (!_reduceMotion) _tabFade.forward();
+    }
+    _shownEntry = entry;
+    setState(() {});
+  }
+
+  void _closeMenu() {
+    if (_menuAnchor != null) setState(() => _menuAnchor = null);
+  }
 
   // Updated after each frame, never during build.
   NavLayout? _lastSeen;
@@ -148,6 +193,10 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold> {
   @override
   void dispose() {
     _settleTimer?.cancel();
+    _registry
+      ..removeListener(_onRegistryChanged)
+      ..dispose();
+    _tabFade.dispose();
     super.dispose();
   }
 
@@ -253,48 +302,150 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold> {
     );
     _scheduleTrack(layout, signals.viewSize);
 
-    final bar =
-        widget.barBuilder?.call(context, layout) ??
-        (_isApple
-            ? cupertinoBarBuilder(context, layout)
-            : materialBarBuilder(context, layout));
     final inset = _bodyInsets(geometry, signals.viewSize);
     final extend =
         widget.extendBodyBehindBar &&
         placement.isVertical &&
         geometry.foldClearance == 0;
+    _reduceMotion =
+        widget.transitions.respectReduceMotion && media.disableAnimations;
 
+    final bodyLayer = Positioned.fill(
+      child: Padding(
+        padding: extend ? EdgeInsets.zero : inset,
+        child: MediaQuery(
+          data: _bodyMedia(media, inset, extend),
+          child: KeyedSubtree(
+            key: _bodyKey,
+            child: NavActionScope(registry: _registry, child: widget.body),
+          ),
+        ),
+      ),
+    );
+
+    final top = _registry.viewFor(NavPaneScope.mainPane);
+    final route = ModalRoute.of(context);
+    // A dialog or sheet on the navigator holding the scaffold: the route is
+    // active but not current, and no page transition is moving it.
+    final scaffoldCovered =
+        route != null &&
+        route.isActive &&
+        !route.isCurrent &&
+        route.secondaryAnimation?.status == AnimationStatus.dismissed;
     return FoldDebugOverlay(
       enabled: widget.debugOverlay,
       ruleLabel: placement.ruleId.isEmpty ? null : placement.ruleId,
-      child: Stack(
-        textDirection: direction,
-        children: [
-          Positioned.fill(
-            child: Padding(
-              padding: extend ? EdgeInsets.zero : inset,
-              child: MediaQuery(
-                data: _bodyMedia(media, inset, extend),
-                child: KeyedSubtree(key: _bodyKey, child: widget.body),
-              ),
-            ),
-          ),
-          Positioned.fromRect(
-            rect: geometry.barRect,
-            child: AnimatedSwitcher(
-              duration: duration,
-              layoutBuilder: (current, previous) => Stack(
-                fit: StackFit.expand,
-                children: [...previous, ?current],
-              ),
-              child: KeyedSubtree(
-                key: ValueKey<NavEdge>(placement.edge),
-                child: bar,
-              ),
-            ),
-          ),
-        ],
+      child: PopScope(
+        canPop: _menuAnchor == null,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _closeMenu();
+        },
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_tabFade, ...top.animations]),
+          child: bodyLayer,
+          builder: (context, body) {
+            final view = _registry.viewFor(
+              NavPaneScope.mainPane,
+              reduceMotion: _reduceMotion,
+            );
+            final composed = _compose(layout, view, media, geometry);
+            final bar =
+                widget.barBuilder?.call(context, composed) ??
+                (_isApple
+                    ? cupertinoBarBuilder(context, composed)
+                    : materialBarBuilder(context, composed));
+            final covered =
+                scaffoldCovered || (view.entry?.isCoveredByOverlay ?? false);
+            final anchor = _menuAnchor;
+            final overflowed = composed.overflowedActions;
+            return Stack(
+              textDirection: direction,
+              children: [
+                body!,
+                Positioned.fromRect(
+                  rect: geometry.barRect,
+                  child: AnimatedSwitcher(
+                    duration: duration,
+                    layoutBuilder: (current, previous) => Stack(
+                      fit: StackFit.expand,
+                      children: [...previous, ?current],
+                    ),
+                    child: KeyedSubtree(
+                      key: ValueKey<NavEdge>(placement.edge),
+                      child: IgnorePointer(
+                        ignoring: covered,
+                        child: Opacity(opacity: covered ? 0.4 : 1, child: bar),
+                      ),
+                    ),
+                  ),
+                ),
+                if (anchor != null && overflowed.isNotEmpty)
+                  Positioned.fill(
+                    child:
+                        (widget.overflowBuilder ??
+                        (context, items, rect, dismiss) => NavOverflowMenu(
+                          items: items,
+                          anchor: rect,
+                          dismiss: dismiss,
+                        ))(context, overflowed, anchor, _closeMenu),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
+    );
+  }
+
+  /// Adds the published actions, Back state and overflow to the placement-only [base] layout.
+  NavLayout _compose(
+    NavLayout base,
+    NavActionsView view,
+    MediaQueryData media,
+    NavGeometry geometry,
+  ) {
+    final entry = view.entry;
+    final anchorEntry = entry ?? _registry.anchorFor(NavPaneScope.mainPane);
+    final showBack = NavBackController.canGoBack(anchorEntry);
+    final actions = entry?.actions ?? PageActions.empty;
+    final extent = geometry.itemAxis == NavAxis.vertical
+        ? geometry.barRect.height
+        : geometry.barRect.width;
+    final opacity = (view.opacity * _tabFade.value).clamp(0.0, 1.0);
+
+    if (base.placement.actionsInHeader) {
+      return base.copyWith(
+        showBack: showBack,
+        onBack: showBack ? () => NavBackController.goBack(anchorEntry) : null,
+        prominentAction: actions.prominentAction,
+        headerActions: actions.groups,
+        overflowedActions: actions.overflowItems,
+        actionsOpacity: opacity,
+        onOverflow: actions.overflowItems.isEmpty
+            ? null
+            : (rect) => setState(() => _menuAnchor = rect),
+      );
+    }
+    final fit = resolveOverflow(
+      actions: actions,
+      extent: extent,
+      itemExtent: 56,
+      textScale: media.textScaler.scale(1),
+      mode: actions.compression,
+      tabCount: base.destinations.length,
+      hasBack: showBack,
+    );
+    return base.copyWith(
+      showBack: showBack,
+      onBack: showBack ? () => NavBackController.goBack(anchorEntry) : null,
+      prominentAction: actions.prominentAction,
+      visibleActions: fit.visibleGroups,
+      overflowedActions: fit.overflowed,
+      tabsCompressed: fit.tabsCompressed,
+      actionsOpacity: opacity,
+      onOverflow: fit.overflowed.isEmpty
+          ? null
+          : (rect) => setState(() => _menuAnchor = rect),
     );
   }
 

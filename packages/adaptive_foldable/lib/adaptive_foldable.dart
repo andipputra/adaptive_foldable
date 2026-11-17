@@ -21,9 +21,12 @@ export 'package:adaptive_foldable/src/model/nav_insets.dart';
 export 'package:adaptive_foldable/src/model/nav_layout.dart';
 export 'package:adaptive_foldable/src/model/nav_placement.dart';
 export 'package:adaptive_foldable/src/model/nav_priority.dart';
+export 'package:adaptive_foldable/src/model/page_actions.dart' show PageActions;
 export 'package:adaptive_foldable/src/policy/apple_policy.dart';
 export 'package:adaptive_foldable/src/policy/material_policy.dart';
 export 'package:adaptive_foldable/src/policy/nav_placement_policy.dart';
+export 'package:adaptive_foldable/src/scaffold/actions/adaptive_nav_actions.dart';
+export 'package:adaptive_foldable/src/scaffold/actions/nav_pane_scope.dart';
 export 'package:adaptive_foldable/src/scaffold/adaptive_nav_scaffold.dart';
 export 'package:adaptive_foldable/src/scaffold/nav_adapters.dart'
     show navDestinationFromIcons;

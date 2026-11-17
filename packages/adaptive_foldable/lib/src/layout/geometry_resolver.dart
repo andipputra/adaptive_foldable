@@ -20,6 +20,9 @@ const double kBottomBarThicknessPerTextScale = 17;
 /// Initial value; revisited against the simulator in ANS-M1-013.
 const double kSideBarThickness = 80;
 
+/// Extra side-column width in dp per 1.0 of text scale above 1.0, so scaled labels fit.
+const double kSideBarThicknessPerTextScale = 24;
+
 /// Space in dp kept between the bar and an active fold it was cut away from.
 const double kFoldClearance = 4;
 
@@ -35,7 +38,7 @@ const double kFoldClearance = 4;
 ///   below a status or camera region at the top ([NavGeometry.skipRegion]) and
 ///   ending above a camera region at the bottom or the home-indicator gap.
 /// - Logical edges resolve through [direction]; physical edges do not flip.
-/// - [textScale] grows the bottom bar so scaled labels fit.
+/// - [textScale] grows the bottom bar and the side column so scaled labels fit.
 /// - The result never intersects an active fold: the bar is cut to its largest
 ///   remaining piece, [kFoldClearance] away from the fold, and
 ///   [NavGeometry.foldClearance] reports that distance (0 when no cut was needed).
@@ -64,14 +67,17 @@ NavGeometry resolveGeometry({
     );
   } else {
     final onLeft = placement.isOnLeft(direction);
-    final span = _freeSpan(signals, viewPadding, onLeft, size);
+    final side =
+        kSideBarThickness +
+        kSideBarThicknessPerTextScale * (math.max(1, textScale) - 1);
+    final span = _freeSpan(signals, viewPadding, onLeft, size, side);
     final top = span.$1;
     skipBottom = top;
     final bottom = math.max(top, math.min(span.$2, size.height - gap));
     bar = onLeft
-        ? Rect.fromLTRB(0, top, kSideBarThickness + viewPadding.left, bottom)
+        ? Rect.fromLTRB(0, top, side + viewPadding.left, bottom)
         : Rect.fromLTRB(
-            size.width - kSideBarThickness - viewPadding.right,
+            size.width - side - viewPadding.right,
             top,
             size.width,
             bottom,
@@ -124,11 +130,11 @@ NavGeometry resolveGeometry({
   NavInsets padding,
   bool onLeft,
   Size size,
+  double side,
 ) {
   var top = padding.top;
   var bottom = size.height;
-  final columnWidth =
-      kSideBarThickness + (onLeft ? padding.left : padding.right);
+  final columnWidth = side + (onLeft ? padding.left : padding.right);
   final left = onLeft ? 0.0 : size.width - columnWidth;
   final right = left + columnWidth;
   for (final o in signals.occlusions) {
