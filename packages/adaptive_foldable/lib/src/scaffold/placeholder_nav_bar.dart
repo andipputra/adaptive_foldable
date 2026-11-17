@@ -28,6 +28,7 @@ class PlaceholderNavBar extends StatelessWidget {
                   child: Text(
                     layout.destinations[i].label,
                     style: TextStyle(
+                      decoration: TextDecoration.none,
                       fontWeight: i == layout.selectedIndex
                           ? FontWeight.bold
                           : FontWeight.normal,

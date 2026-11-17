@@ -74,6 +74,19 @@ void main() {
       expect(g.itemAxis, NavAxis.vertical);
     });
 
+    test('camera at the bottom ends the column above it', () {
+      final g = _g(
+        NavEdge.right,
+        _s(
+          const Size(678, 466),
+          occlusions: const [Rect.fromLTRB(594, 384, 678, 466)],
+        ),
+      );
+      expect(g.barRect.top, 0);
+      expect(g.barRect.bottom, 384);
+      expect(g.skipRegion, isNull);
+    });
+
     test('occlusion away from the column is ignored', () {
       final g = _g(
         NavEdge.right,

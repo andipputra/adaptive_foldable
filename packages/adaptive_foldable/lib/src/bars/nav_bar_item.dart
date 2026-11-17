@@ -114,6 +114,7 @@ class NavBarItem extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 12,
+                    decoration: TextDecoration.none,
                     color: color,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),

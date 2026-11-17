@@ -113,16 +113,24 @@ void main() {
   }
 
   group('placement per preset', () {
-    testWidgets('Cupertino column starts below the camera on cover landscape', (
+    testWidgets('Cupertino column starts below the camera on cover portrait', (
+      tester,
+    ) async {
+      final s = FakeFoldSignals.from(FoldSignalsPresets.duoCoverPortrait);
+      await _pump(tester, s, cupertinoBarBuilder);
+      expect(
+        tester.getTopLeft(find.text('Home')).dy,
+        greaterThanOrEqualTo(174),
+      );
+    });
+
+    testWidgets('Cupertino column ends above the camera on cover landscape', (
       tester,
     ) async {
       final s = FakeFoldSignals.from(FoldSignalsPresets.duoCoverLandscape);
       await _pump(tester, s, cupertinoBarBuilder);
-      final top = tester.getTopLeft(find.text('Home')).dy;
-      final occlusionBottom = s.occlusions
-          .map((r) => r.bottom)
-          .fold<double>(0, (a, b) => a > b ? a : b);
-      expect(top, greaterThanOrEqualTo(occlusionBottom));
+      expect(find.text('Me'), findsOneWidget);
+      expect(tester.getBottomLeft(find.text('Me')).dy, lessThanOrEqualTo(384));
     });
 
     testWidgets('Cupertino column does not flip in RTL', (tester) async {

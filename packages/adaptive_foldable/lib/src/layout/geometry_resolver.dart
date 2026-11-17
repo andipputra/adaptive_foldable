@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'dart:ui' show Rect, TextDirection;
+import 'dart:ui' show Rect, Size, TextDirection;
 
 import 'package:adaptive_foldable/src/model/nav_axis.dart';
 import 'package:adaptive_foldable/src/model/nav_geometry.dart';
@@ -30,8 +30,8 @@ const double kFoldClearance = 4;
 /// - Bottom bar: spans the view width, [kBottomBarThickness] plus the bottom
 ///   inset tall; [NavGeometry.homeIndicatorGap] is that inset.
 /// - Side column: [kSideBarThickness] plus the inset on its side, starting
-///   below the status and camera region ([NavGeometry.skipRegion]) and ending
-///   above the home-indicator gap.
+///   below a status or camera region at the top ([NavGeometry.skipRegion]) and
+///   ending above a camera region at the bottom or the home-indicator gap.
 /// - Logical edges resolve through [direction]; physical edges do not flip.
 /// - The result never intersects an active fold: the bar is cut to its largest
 ///   remaining piece, [kFoldClearance] away from the fold, and
@@ -57,9 +57,9 @@ NavGeometry resolveGeometry({
     );
   } else {
     final onLeft = _isLeft(placement.edge, direction);
-    final skipBottom = _skipBottom(signals, viewPadding, onLeft, size.width);
-    final top = math.min(skipBottom, size.height);
-    final bottom = math.max(top, size.height - gap);
+    final span = _freeSpan(signals, viewPadding, onLeft, size);
+    final top = span.$1;
+    final bottom = math.max(top, math.min(span.$2, size.height - gap));
     bar = onLeft
         ? Rect.fromLTRB(0, top, kSideBarThickness + viewPadding.left, bottom)
         : Rect.fromLTRB(
@@ -99,24 +99,32 @@ bool _isLeft(NavEdge edge, TextDirection direction) => switch (edge) {
   NavEdge.bottom => false,
 };
 
-/// Bottom of the status and camera region that a side column must start below.
-double _skipBottom(
+/// Vertical span `(top, bottom)` of the side column left free by the status
+/// bar and by camera occlusions that overlap the column.
+///
+/// An occlusion in the upper half pushes the top down; one in the lower half
+/// (camera at the bottom in landscape) pulls the bottom up.
+(double, double) _freeSpan(
   FoldSignals signals,
   NavInsets padding,
   bool onLeft,
-  double width,
+  Size size,
 ) {
-  var bottom = padding.top;
+  var top = padding.top;
+  var bottom = size.height;
   final columnWidth =
       kSideBarThickness + (onLeft ? padding.left : padding.right);
-  final column = onLeft
-      ? Rect.fromLTWH(0, 0, columnWidth, double.infinity)
-      : Rect.fromLTWH(width - columnWidth, 0, columnWidth, double.infinity);
+  final left = onLeft ? 0.0 : size.width - columnWidth;
+  final right = left + columnWidth;
   for (final o in signals.occlusions) {
-    final overlapsColumn = o.left < column.right && o.right > column.left;
-    if (overlapsColumn) bottom = math.max(bottom, o.bottom);
+    if (o.left >= right || o.right <= left) continue;
+    if (o.center.dy < size.height / 2) {
+      top = math.max(top, o.bottom);
+    } else {
+      bottom = math.min(bottom, o.top);
+    }
   }
-  return bottom;
+  return (math.min(top, size.height), bottom);
 }
 
 /// Returns the largest-area part of [bar] that does not overlap [keepOut].
