@@ -5,6 +5,16 @@ export 'package:adaptive_foldable/src/debug/debug_report.dart'
     show formatSignalsReport;
 export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
     show FoldDebugOverlay;
+export 'package:adaptive_foldable/src/model/nav_action.dart';
+export 'package:adaptive_foldable/src/model/nav_action_group.dart';
+export 'package:adaptive_foldable/src/model/nav_action_placement.dart';
+export 'package:adaptive_foldable/src/model/nav_axis.dart';
+export 'package:adaptive_foldable/src/model/nav_compression.dart';
+export 'package:adaptive_foldable/src/model/nav_destination.dart';
+export 'package:adaptive_foldable/src/model/nav_geometry.dart';
+export 'package:adaptive_foldable/src/model/nav_layout.dart';
+export 'package:adaptive_foldable/src/model/nav_placement.dart';
+export 'package:adaptive_foldable/src/model/nav_priority.dart';
 export 'package:adaptive_foldable/src/signals/fake_fold_signals.dart';
 export 'package:adaptive_foldable/src/signals/fold_signals.dart'
     show FoldSignals;

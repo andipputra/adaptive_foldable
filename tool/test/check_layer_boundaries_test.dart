@@ -173,5 +173,32 @@ export 'package:flutter/widgets.dart';
       expect(violations.length, 1);
       expect(violations.first.importUri, 'package:flutter/widgets.dart');
     });
+
+    test('model files may import only IconData from widgets.dart', () {
+      const model = 'packages/adaptive_foldable/lib/src/model/nav_action.dart';
+      expect(
+        findViolations({
+          model: "import 'package:flutter/widgets.dart' show IconData;",
+        }),
+        isEmpty,
+      );
+      expect(
+        findViolations({model: "import 'package:flutter/widgets.dart';"}),
+        hasLength(1),
+      );
+      expect(
+        findViolations({
+          model: "import 'package:flutter/widgets.dart' show Widget;",
+        }),
+        hasLength(1),
+      );
+      expect(
+        findViolations({
+          'packages/adaptive_foldable/lib/src/policy/p.dart':
+              "import 'package:flutter/widgets.dart' show IconData;",
+        }),
+        hasLength(1),
+      );
+    });
   });
 }

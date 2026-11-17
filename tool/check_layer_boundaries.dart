@@ -34,6 +34,22 @@ bool isPureLayerFile(String path) {
       normalized.contains('src/layout/');
 }
 
+/// Returns true if [path] belongs to `src/model/`.
+bool isModelFile(String path) =>
+    path.replaceAll('\\', '/').contains('src/model/');
+
+/// Returns true if a `src/model/` directive is allowed: pure imports, plus
+/// `package:flutter/widgets.dart` restricted to `show IconData`.
+bool isAllowedModelDirective(String uri, String line) {
+  if (uri == 'package:flutter/widgets.dart') {
+    return RegExp(r'\bshow\s+IconData\s*;').hasMatch(line);
+  }
+  if (uri.startsWith('package:flutter/')) {
+    return uri == 'package:flutter/foundation.dart';
+  }
+  return isAllowedImport(uri);
+}
+
 /// Returns true if [uri] is an allowed import/export in pure layers.
 bool isAllowedImport(String uri) {
   if (uri.startsWith('dart:')) {
@@ -77,7 +93,8 @@ List<Violation> findViolations(Map<String, String> sources) {
 
   for (final entry in sources.entries) {
     final path = entry.key;
-    if (!isPureLayerFile(path)) continue;
+    final isModel = isModelFile(path);
+    if (!isPureLayerFile(path) && !isModel) continue;
 
     final lines = entry.value.split('\n');
     bool inBlockComment = false;
@@ -108,17 +125,20 @@ List<Violation> findViolations(Map<String, String> sources) {
       final match = directiveRegex.firstMatch(line);
       if (match != null) {
         final uri = match.group(2)!;
-        if (!isAllowedImport(uri)) {
+        final allowed = isModel
+            ? isAllowedModelDirective(uri, line)
+            : isAllowedImport(uri);
+        if (!allowed) {
           violations.add(
             Violation(
               path: path,
               line: i + 1,
               importUri: uri,
               reason:
-                  'Pure layers (policy, layout) may only import dart:*, '
+                  'Pure layers (policy, layout, model) may only import dart:*, '
                   'package:flutter/foundation.dart, src/model/, '
                   'src/signals/fold_signals.dart, src/signals/signal_types.dart, '
-                  'or each other.',
+                  'or each other (model may also use `package:flutter/widgets.dart show IconData`).',
             ),
           );
         }
@@ -137,6 +157,7 @@ void main(List<String> args) {
   final searchDirs = [
     Directory('${rootDir.path}/packages/adaptive_foldable/lib/src/policy'),
     Directory('${rootDir.path}/packages/adaptive_foldable/lib/src/layout'),
+    Directory('${rootDir.path}/packages/adaptive_foldable/lib/src/model'),
   ];
 
   for (final dir in searchDirs) {
