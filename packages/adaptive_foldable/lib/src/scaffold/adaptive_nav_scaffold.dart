@@ -42,7 +42,7 @@ const Duration kLayoutSettleDelay = Duration(milliseconds: 150);
 
 /// Draws the overflow menu for the actions that did not fit.
 ///
-/// [anchor] is the global rectangle of the overflow button; call [dismiss] to close the menu.
+/// [anchor] is the rectangle of the overflow button in the scaffold's own coordinate space; call [dismiss] to close the menu.
 typedef NavOverflowBuilder = Widget Function(
   BuildContext context,
   List<NavAction> items,
@@ -130,7 +130,12 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
     value: 1,
   );
   NavActionEntry? _shownEntry;
+  bool _routeTransitionSeen = false;
   Rect? _menuAnchor;
+  final GlobalKey _stackKey = GlobalKey(
+    debugLabel: 'AdaptiveNavScaffold.stack',
+  );
+  Animation<double>? _routeSecondary;
   bool _reduceMotion = false;
 
   @override
@@ -139,18 +144,56 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
     _registry.addListener(_onRegistryChanged);
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A dialog or sheet over the scaffold's route changes the secondary animation status.
+    final secondary = ModalRoute.of(context)?.secondaryAnimation;
+    if (secondary != _routeSecondary) {
+      _routeSecondary?.removeStatusListener(_onRouteSecondary);
+      _routeSecondary = secondary?..addStatusListener(_onRouteSecondary);
+    }
+  }
+
+  void _onRouteSecondary(AnimationStatus _) {
+    if (mounted) setState(() {});
+  }
+
+  /// Converts a global rectangle to the scaffold's own coordinate space.
+  Rect _toLocal(Rect global) {
+    final box = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return global;
+    return MatrixUtils.transformRect(
+      box.getTransformTo(null)..invert(),
+      global,
+    );
+  }
+
   /// Runs after a frame in which pages registered, changed or went on or off stage.
   void _onRegistryChanged() {
     if (!mounted) return;
     final view = _registry.viewFor(NavPaneScope.mainPane);
     final entry = view.entry;
     final settled = entry == null || entry.progress >= 1;
-    if (entry != _shownEntry && settled && _shownEntry != null) {
-      _tabFade
-        ..duration = widget.transitions.duration
-        ..value = _reduceMotion ? 1 : 0;
-      if (!_reduceMotion) _tabFade.forward();
+    final moving = view.animations.any(
+      (a) =>
+          a.status == AnimationStatus.forward ||
+          a.status == AnimationStatus.reverse,
+    );
+    if (!settled || moving) _routeTransitionSeen = true;
+    if (settled && !moving) {
+      // A change with no route animation behind it is a tab or branch switch.
+      if (entry != _shownEntry &&
+          _shownEntry != null &&
+          !_routeTransitionSeen) {
+        _tabFade
+          ..duration = widget.transitions.duration
+          ..value = _reduceMotion ? 1 : 0;
+        if (!_reduceMotion) _tabFade.forward();
+      }
+      _routeTransitionSeen = false;
     }
+    if (entry != _shownEntry) _menuAnchor = null;
     _shownEntry = entry;
     setState(() {});
   }
@@ -193,6 +236,7 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
   @override
   void dispose() {
     _settleTimer?.cancel();
+    _routeSecondary?.removeStatusListener(_onRouteSecondary);
     _registry
       ..removeListener(_onRegistryChanged)
       ..dispose();
@@ -335,30 +379,31 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
     return FoldDebugOverlay(
       enabled: widget.debugOverlay,
       ruleLabel: placement.ruleId.isEmpty ? null : placement.ruleId,
-      child: PopScope(
-        canPop: _menuAnchor == null,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) _closeMenu();
-        },
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_tabFade, ...top.animations]),
-          child: bodyLayer,
-          builder: (context, body) {
-            final view = _registry.viewFor(
-              NavPaneScope.mainPane,
-              reduceMotion: _reduceMotion,
-            );
-            final composed = _compose(layout, view, media, geometry);
-            final bar =
-                widget.barBuilder?.call(context, composed) ??
-                (_isApple
-                    ? cupertinoBarBuilder(context, composed)
-                    : materialBarBuilder(context, composed));
-            final covered =
-                scaffoldCovered || (view.entry?.isCoveredByOverlay ?? false);
-            final anchor = _menuAnchor;
-            final overflowed = composed.overflowedActions;
-            return Stack(
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_tabFade, ...top.animations]),
+        child: bodyLayer,
+        builder: (context, body) {
+          final view = _registry.viewFor(
+            NavPaneScope.mainPane,
+            reduceMotion: _reduceMotion,
+          );
+          final composed = _compose(layout, view, media, geometry);
+          final bar =
+              widget.barBuilder?.call(context, composed) ??
+              (_isApple
+                  ? cupertinoBarBuilder(context, composed)
+                  : materialBarBuilder(context, composed));
+          final covered =
+              scaffoldCovered || (view.entry?.isCoveredByOverlay ?? false);
+          final overflowed = composed.overflowedActions;
+          final anchor = overflowed.isEmpty ? null : _menuAnchor;
+          return PopScope(
+            canPop: anchor == null,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) _closeMenu();
+            },
+            child: Stack(
+              key: _stackKey,
               textDirection: direction,
               children: [
                 body!,
@@ -379,7 +424,7 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
                     ),
                   ),
                 ),
-                if (anchor != null && overflowed.isNotEmpty)
+                if (anchor != null)
                   Positioned.fill(
                     child:
                         (widget.overflowBuilder ??
@@ -390,9 +435,9 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
                         ))(context, overflowed, anchor, _closeMenu),
                   ),
               ],
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -414,16 +459,27 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
     final opacity = (view.opacity * _tabFade.value).clamp(0.0, 1.0);
 
     if (base.placement.actionsInHeader) {
+      final headerExtent =
+          media.size.width -
+          (geometry.itemAxis == NavAxis.vertical ? geometry.barRect.width : 0);
+      final fit = resolveOverflow(
+        actions: actions,
+        extent: headerExtent,
+        itemExtent: 56,
+        textScale: media.textScaler.scale(1),
+        mode: actions.compression,
+        tabCount: 0,
+      );
       return base.copyWith(
         showBack: showBack,
         onBack: showBack ? () => NavBackController.goBack(anchorEntry) : null,
         prominentAction: actions.prominentAction,
-        headerActions: actions.groups,
-        overflowedActions: actions.overflowItems,
+        headerActions: fit.visibleGroups,
+        overflowedActions: fit.overflowed,
         actionsOpacity: opacity,
-        onOverflow: actions.overflowItems.isEmpty
+        onOverflow: fit.overflowed.isEmpty
             ? null
-            : (rect) => setState(() => _menuAnchor = rect),
+            : (rect) => setState(() => _menuAnchor = _toLocal(rect)),
       );
     }
     final fit = resolveOverflow(
@@ -445,7 +501,7 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
       actionsOpacity: opacity,
       onOverflow: fit.overflowed.isEmpty
           ? null
-          : (rect) => setState(() => _menuAnchor = rect),
+          : (rect) => setState(() => _menuAnchor = _toLocal(rect)),
     );
   }
 

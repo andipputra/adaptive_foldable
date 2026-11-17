@@ -80,7 +80,7 @@ List<Widget> buildNavBarItems(
     for (final group in layout.visibleActions)
       for (final a in group.actions) action(a),
     if (layout.onOverflow != null)
-      _OverflowItem(layout: layout, colors: colors),
+      NavBarOverflowItem(layout: layout, colors: colors),
   ];
   final count = layout.destinations.length;
   // Compressed tabs show only the selected destination; tapping moves to the next one.
@@ -121,19 +121,14 @@ List<Widget> buildNavBarItems(
   final tabStart = ordered.length - tabs.length;
   return [
     for (var i = 0; i < ordered.length; i++)
-      _inOrder(
-        i,
-        i >= tabStart && tabsExpand ? Expanded(child: ordered[i]) : ordered[i],
-        expanded: i >= tabStart && tabsExpand,
-      ),
+      _inOrder(i, ordered[i], expanded: i >= tabStart && tabsExpand),
   ];
 }
 
 Widget _inOrder(int index, Widget child, {required bool expanded}) {
-  final item = child is Expanded ? child.child : child;
   final ordered = FocusTraversalOrder(
     order: NumericFocusOrder(index.toDouble()),
-    child: Semantics(sortKey: OrdinalSortKey(index.toDouble()), child: item),
+    child: Semantics(sortKey: OrdinalSortKey(index.toDouble()), child: child),
   );
   return expanded ? Expanded(child: ordered) : ordered;
 }
@@ -142,11 +137,19 @@ Widget _inOrder(int index, Widget child, {required bool expanded}) {
 Widget navBarTraversalGroup({required Widget child}) =>
     FocusTraversalGroup(policy: OrderedTraversalPolicy(), child: child);
 
-/// The ellipsis control; reports its own global rectangle when tapped.
-class _OverflowItem extends StatelessWidget {
-  const _OverflowItem({required this.layout, required this.colors});
+/// The ellipsis control; reports its own global rectangle through `layout.onOverflow` when tapped.
+class NavBarOverflowItem extends StatelessWidget {
+  /// Creates the control for [layout].
+  const NavBarOverflowItem({
+    super.key,
+    required this.layout,
+    required this.colors,
+  });
 
+  /// The resolved layout.
   final NavLayout layout;
+
+  /// Colours to apply.
   final NavBarColors colors;
 
   @override

@@ -185,6 +185,23 @@ void main() {
     expect(visible(r).length + r.overflowed.length, 3);
   });
 
+  test('the same const instance in two groups is removed by position', () {
+    const shared = NavAction(
+      icon: IconData(1),
+      label: 'Shared',
+      onPressed: noop,
+    );
+    final actions = PageActions(
+      groups: [
+        const NavActionGroup([shared, shared]),
+        NavActionGroup([a('X')]),
+      ],
+    );
+    final r = run(actions, extent: 56 * 5); // tabs 3 + ellipsis + 1 visible
+    expect(visible(r).length, 1);
+    expect(visible(r).length + r.overflowed.length, 3);
+  });
+
   test('property: visible + overflowed equals input, order stable', () {
     final rnd = math.Random(7);
     for (var i = 0; i < 500; i++) {

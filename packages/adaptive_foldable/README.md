@@ -62,11 +62,12 @@ AdaptiveNavActions(
 ```
 
 - Every `NavAction` and `NavDestination` needs an `icon` and a non-empty `label`; the label is the tooltip, overflow entry and screen reader text.
-- Actions that do not fit move into an overflow menu, lowest priority and bottom group first. Badged actions rank higher.
+- Actions that do not fit move into an overflow menu, lowest priority and bottom group first. Badged actions rank higher. The menu is `NavOverflowMenu`; pass `overflowBuilder` to replace it, or reuse `NavOverflowMenu` inside your own.
 - A page without `AdaptiveNavActions` shows no actions; the tabs stay.
 - Back appears when the page's own navigator can pop, and pops that navigator with `maybePop`, so `PopScope` is respected.
 - A dialog or sheet leaves the bar in place, dimmed and not tappable.
-- On Material placements (Android), the bar holds the tabs and the prominent action; the other actions arrive in `NavLayout.headerActions` for your top app bar (`MaterialNavBar.headerStrip` draws them).
+- On Material placements (Android), the bar holds the tabs and the prominent action; the other actions arrive, already fitted to the screen width with the rest in the overflow menu, in `NavLayout.headerActions`. Draw them in your top app bar with `MaterialNavBar.headerStrip`, which fades with route transitions. The scaffold does not place that strip for you.
+- `NavPaneScope` is exported for the coming two-pane fold kit; until then only the main pane is drawn.
 
 ## Bring your own bar
 

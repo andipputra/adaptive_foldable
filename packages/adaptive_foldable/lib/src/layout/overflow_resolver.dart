@@ -79,7 +79,7 @@ OverflowResult resolveOverflow({
   }
 
   final removalOrder = _removalOrder(actions.groups);
-  final removed = Set<NavAction>.identity();
+  final removed = <(int, int)>{};
   var cursor = 0;
   while (!fits(shown, tabSlots) && cursor < removalOrder.length) {
     removed.add(removalOrder[cursor++]);
@@ -88,10 +88,11 @@ OverflowResult resolveOverflow({
 
   final visible = <NavActionGroup>[];
   final overflowed = <NavAction>[];
-  for (final group in actions.groups) {
+  for (var g = 0; g < actions.groups.length; g++) {
     final kept = <NavAction>[];
-    for (final action in group.actions) {
-      (removed.contains(action) ? overflowed : kept).add(action);
+    final items = actions.groups[g].actions;
+    for (var i = 0; i < items.length; i++) {
+      (removed.contains((g, i)) ? overflowed : kept).add(items[i]);
     }
     if (kept.isNotEmpty) visible.add(NavActionGroup(kept));
   }
@@ -107,9 +108,9 @@ OverflowResult resolveOverflow({
 int _rank(NavAction a) =>
     a.priority.index * 2 + ((a.badgeCount ?? 0) > 0 ? 1 : 0);
 
-/// Actions in the order they leave the bar: lowest-ranked group and item first.
-List<NavAction> _removalOrder(List<NavActionGroup> groups) {
-  final indexed =
+/// Positions `(group, item)` in the order they leave the bar: lowest-ranked group and item first.
+List<(int, int)> _removalOrder(List<NavActionGroup> groups) {
+  final ranked =
       [
         for (var g = 0; g < groups.length; g++)
           (
@@ -122,17 +123,17 @@ List<NavAction> _removalOrder(List<NavActionGroup> groups) {
         final byRank = a.rank.compareTo(b.rank);
         return byRank != 0 ? byRank : b.index.compareTo(a.index);
       });
-  final order = <NavAction>[];
-  for (final g in indexed) {
+  final order = <(int, int)>[];
+  for (final g in ranked) {
     final items =
         [
           for (var i = 0; i < groups[g.index].actions.length; i++)
-            (index: i, action: groups[g.index].actions[i]),
+            (index: i, rank: _rank(groups[g.index].actions[i])),
         ]..sort((a, b) {
-          final byRank = _rank(a.action).compareTo(_rank(b.action));
+          final byRank = a.rank.compareTo(b.rank);
           return byRank != 0 ? byRank : b.index.compareTo(a.index);
         });
-    order.addAll(items.map((e) => e.action));
+    order.addAll(items.map((e) => (g.index, e.index)));
   }
   return order;
 }

@@ -85,10 +85,10 @@ class _AdaptiveNavActionsState extends State<AdaptiveNavActions> {
   void didUpdateWidget(AdaptiveNavActions oldWidget) {
     super.didUpdateWidget(oldWidget);
     final next = _actions;
-    if (next != _entry.actions) {
-      _entry.actions = next;
-      _registry?.markChanged();
-    }
+    final changed = !next.sameContentAs(_entry.actions);
+    // Always keep the latest callbacks; only a visible change needs a repaint.
+    _entry.actions = next;
+    if (changed) _registry?.markChanged();
   }
 
   void _listenTo(Animation<double>? animation, Animation<double>? secondary) {

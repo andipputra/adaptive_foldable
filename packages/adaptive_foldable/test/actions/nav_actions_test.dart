@@ -93,6 +93,7 @@ class Page extends StatelessWidget {
 }
 
 void main() {
+  reviewRegressionTests();
   dynamicTypeTests();
   group('registry', () {
     testWidgets('publishes actions to the bar', (tester) async {
@@ -366,6 +367,62 @@ void main() {
   });
 
   group('route transitions', () {
+    testWidgets(
+      'incoming actions never flash back to 0 after the push settles',
+      (tester) async {
+        await pump(tester, shell(Page('A', actions: [act('Share', null)])));
+        await tester.tap(find.text('push from A'));
+        var sawChild = false;
+        double? last;
+        for (var i = 0; i < 60; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          final f = find.text('Child');
+          if (f.evaluate().isEmpty) continue;
+          sawChild = true;
+          final o = tester
+              .widgetList<Opacity>(
+                find.ancestor(of: f, matching: find.byType(Opacity)),
+              )
+              .fold<double>(1, (a, w) => a * w.opacity);
+          if (last != null) {
+            expect(o, greaterThanOrEqualTo(last - 1e-9), reason: 'frame $i');
+          }
+          last = o;
+        }
+        expect(sawChild, isTrue);
+        expect(last, 1);
+      },
+    );
+
+    testWidgets('popping does not flash the lower actions either', (
+      tester,
+    ) async {
+      final inner = GlobalKey<NavigatorState>();
+      await pump(
+        tester,
+        shell(Page('A', actions: [act('Share', null)]), key: inner),
+      );
+      await tester.tap(find.text('push from A'));
+      await tester.pumpAndSettle();
+      inner.currentState!.pop();
+      double? last;
+      for (var i = 0; i < 60; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        final f = find.text('Share');
+        if (f.evaluate().isEmpty) continue;
+        final o = tester
+            .widgetList<Opacity>(
+              find.ancestor(of: f, matching: find.byType(Opacity)),
+            )
+            .fold<double>(1, (a, w) => a * w.opacity);
+        if (last != null && o < last - 1e-9 && last > 0.99) {
+          fail('flashed from $last to $o at frame $i');
+        }
+        last = o;
+      }
+      expect(last, 1);
+    });
+
     testWidgets('actions fade with the route animation and settle', (
       tester,
     ) async {
@@ -450,5 +507,177 @@ void dynamicTypeTests() {
         }
       });
     }
+  });
+}
+
+void reviewRegressionTests() {
+  group('review regressions', () {
+    testWidgets(
+      'system Back closes an open menu, and a stale menu cannot block it',
+      (tester) async {
+        final inner = GlobalKey<NavigatorState>();
+        await pump(
+          tester,
+          shell(
+            Page(
+              'A',
+              actions: [for (var i = 0; i < 8; i++) act('Act$i', null)],
+              overflow: [act('Report', null)],
+            ),
+            key: inner,
+          ),
+        );
+        await tester.tap(find.text('More'));
+        await tester.pump();
+        expect(find.text('Report'), findsOneWidget);
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        expect(find.text('Report'), findsNothing);
+
+        // Open again, then change the page underneath: the stale anchor must go.
+        await tester.tap(find.text('More'));
+        await tester.pump();
+        inner.currentState!.push(
+          MaterialPageRoute<void>(
+            builder: (_) => Page('B', actions: [act('Solo', null)]),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Report'), findsNothing);
+        await tester.tap(find.text('Back'));
+        await tester.pumpAndSettle();
+        expect(find.text('Report'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'overflow menu is positioned in the scaffold space when it is not at the screen origin',
+      (tester) async {
+        final s = sig();
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = s.viewSize;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (c, child) => FoldSignalsScope(override: s, child: child!),
+            home: Padding(
+              padding: const EdgeInsets.only(top: 0),
+              child: AdaptiveNavScaffold(
+                destinations: _dests,
+                selectedIndex: 0,
+                onSelected: (_) {},
+                policy: const ApplePolicy(),
+                body: Page(
+                  'A',
+                  actions: [for (var i = 0; i < 8; i++) act('Act$i', null)],
+                  overflow: [act('Report', null)],
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        await tester.tap(find.text('More'));
+        await tester.pump();
+        final menu = tester.getRect(find.text('Report'));
+        final more = tester.getRect(find.text('More'));
+        expect(menu.bottom, lessThanOrEqualTo(more.top + 1));
+        expect(menu.left, greaterThanOrEqualTo(0));
+        expect(menu.right, lessThanOrEqualTo(400));
+      },
+    );
+
+    testWidgets(
+      'Material placement overflows header actions instead of overflowing the row',
+      (tester) async {
+        final s = sig(const Size(700, 700));
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = s.viewSize;
+        addTearDown(tester.view.reset);
+        NavLayout? seen;
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (c, child) => FoldSignalsScope(override: s, child: child!),
+            home: AdaptiveNavScaffold(
+              destinations: _dests,
+              selectedIndex: 0,
+              onSelected: (_) {},
+              policy: const MaterialPolicy(),
+              barBuilder: (c, l) {
+                seen = l;
+                return const SizedBox.expand();
+              },
+              body: Page(
+                'A',
+                actions: [for (var i = 0; i < 20; i++) act('Act$i', null)],
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(seen!.overflowedActions, isNotEmpty);
+        expect(
+          seen!.headerActions.fold<int>(0, (n, g) => n + g.actions.length) +
+              seen!.overflowedActions.length,
+          20,
+        );
+        expect(seen!.onOverflow, isNotNull);
+      },
+    );
+
+    testWidgets(
+      'header strip applies the action opacity and shows the overflow control',
+      (tester) async {
+        final layout = NavLayout(
+          placement: const NavPlacement(NavEdge.leading, actionsInHeader: true),
+          geometry: const NavGeometry(
+            barRect: Rect.fromLTWH(0, 0, 80, 600),
+            itemAxis: NavAxis.vertical,
+          ),
+          headerActions: [
+            NavActionGroup([act('Share', null)]),
+          ],
+          actionsOpacity: 0.3,
+          onOverflow: (_) {},
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Material(
+              child: Builder(
+                builder: (c) => MaterialNavBar.headerStrip(c, layout),
+              ),
+            ),
+          ),
+        );
+        final o = tester.widget<Opacity>(
+          find
+              .ancestor(of: find.text('Share'), matching: find.byType(Opacity))
+              .first,
+        );
+        expect(o.opacity, 0.3);
+        expect(find.text('More'), findsOneWidget);
+      },
+    );
+
+    test('PageActions ignores onPressed identity but sees visible changes', () {
+      PageActions of(String label, {int? badge}) => PageActions(
+        groups: [
+          NavActionGroup([
+            NavAction(
+              icon: Icons.star,
+              label: label,
+              onPressed: () {},
+              badgeCount: badge,
+            ),
+          ]),
+        ],
+      );
+      expect(of('A').sameContentAs(of('A')), isTrue);
+      expect(of('A').sameContentAs(of('B')), isFalse);
+      expect(of('A').sameContentAs(of('A', badge: 2)), isFalse);
+      expect(of('A') == of('A'), isFalse);
+    });
   });
 }

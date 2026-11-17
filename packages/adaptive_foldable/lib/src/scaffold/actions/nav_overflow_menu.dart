@@ -51,8 +51,6 @@ class NavOverflowMenu extends StatelessWidget {
         double left;
         double top;
         if (anchor.center.dx > size.width * 0.66 &&
-            anchor.width < size.width / 2 &&
-            anchor.height > anchor.width * 0.0 &&
             anchor.top < size.height - kOverflowRowHeight * 2) {
           left = anchor.left - kOverflowMenuWidth - _gap;
           top = anchor.top;
