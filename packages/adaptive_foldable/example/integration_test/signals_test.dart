@@ -15,13 +15,11 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify main screen rendered with debug overlay
-    expect(find.textContaining('Adaptive Foldable:'), findsOneWidget);
+    expect(find.textContaining("Message 0"), findsOneWidget);
     expect(find.byType(FoldDebugOverlay), findsOneWidget);
 
     // Verify signals are available and readable through of(context)
-    final BuildContext homeContext = tester.element(
-      find.byType(ExampleHomePage),
-    );
+    final BuildContext homeContext = tester.element(find.byType(InboxPage));
     final signals = FoldSignals.of(homeContext);
 
     expect(signals.isAvailable, isTrue);

@@ -7,6 +7,7 @@ void main() {
 
   testWidgets('App starts', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
-    expect(find.textContaining('Adaptive Foldable Example'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Message 0'), findsOneWidget);
   });
 }

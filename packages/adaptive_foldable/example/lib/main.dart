@@ -1,97 +1,166 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-/// Example application entry widget.
-class MyApp extends StatelessWidget {
+/// Example application: a `StatefulShellRoute` with two tabs whose pages publish actions.
+class MyApp extends StatefulWidget {
   /// Creates an instance of [MyApp].
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      builder: (context, child) => FoldSignalsScope(child: child!),
-      home: const ExampleShell(),
-    );
-  }
+  State<MyApp> createState() => _MyAppState();
 }
 
-/// Example shell: an [AdaptiveNavScaffold] around the signals page.
-class ExampleShell extends StatefulWidget {
-  /// Creates an instance of [ExampleShell].
-  const ExampleShell({super.key});
-
-  @override
-  State<ExampleShell> createState() => _ExampleShellState();
-}
-
-class _ExampleShellState extends State<ExampleShell> {
-  int _index = 0;
-  String _lastEvent = 'none';
-
-  @override
-  Widget build(BuildContext context) {
-    return AdaptiveNavScaffold(
-      destinations: const [
-        NavDestination(icon: Icons.home_outlined, label: 'Home'),
-        NavDestination(
-          icon: Icons.inbox_outlined,
-          label: 'Inbox',
-          badgeCount: 7,
+class _MyAppState extends State<MyApp> {
+  late final GoRouter _router = GoRouter(
+    initialLocation: '/inbox',
+    routes: [
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => AdaptiveNavScaffold(
+          destinations: const [
+            NavDestination(
+              icon: Icons.inbox_outlined,
+              label: 'Inbox',
+              badgeCount: 7,
+            ),
+            NavDestination(icon: Icons.person_outline, label: 'Profile'),
+          ],
+          selectedIndex: shell.currentIndex,
+          onSelected: shell.goBranch,
+          debugOverlay: true,
+          body: shell,
         ),
-        NavDestination(icon: Icons.person_outline, label: 'Me'),
-      ],
-      selectedIndex: _index,
-      onSelected: (i) => setState(() => _index = i),
-      debugOverlay: true,
-      onLayoutChanged: (previous, next) => setState(
-        () => _lastEvent =
-            '${previous.placement.edge.name} -> ${next.placement.edge.name}',
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/inbox',
+                builder: (_, _) => const InboxPage(),
+                routes: [
+                  GoRoute(
+                    path: 'message/:id',
+                    builder: (_, state) =>
+                        MessagePage(id: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/profile', builder: (_, _) => const ProfilePage()),
+            ],
+          ),
+        ],
       ),
-      body: ExampleHomePage(lastLayoutEvent: _lastEvent),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: _router,
+      builder: (context, child) => FoldSignalsScope(child: child!),
     );
   }
 }
 
-/// Example home page displaying resolved platform signals.
-class ExampleHomePage extends StatefulWidget {
-  /// Creates an instance of [ExampleHomePage].
-  const ExampleHomePage({super.key, this.lastLayoutEvent = 'none'});
-
-  /// Last placement change reported by `onLayoutChanged`.
-  final String lastLayoutEvent;
+/// List of messages; publishes one action.
+class InboxPage extends StatelessWidget {
+  /// Creates an instance of [InboxPage].
+  const InboxPage({super.key});
 
   @override
-  State<ExampleHomePage> createState() => _ExampleHomePageState();
+  Widget build(BuildContext context) {
+    return AdaptiveNavActions(
+      groups: [
+        NavActionGroup([
+          NavAction(icon: Icons.refresh, label: 'Refresh', onPressed: () {}),
+        ]),
+      ],
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Inbox')),
+        body: ListView(
+          key: const PageStorageKey('inbox'),
+          children: [
+            for (var i = 0; i < 40; i++)
+              ListTile(
+                title: Text('Message $i'),
+                onTap: () => context.go('/inbox/message/$i'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _ExampleHomePageState extends State<ExampleHomePage> {
+/// Message detail with enough actions to show the overflow menu.
+class MessagePage extends StatelessWidget {
+  /// Creates an instance of [MessagePage] for message [id].
+  const MessagePage({super.key, required this.id});
+
+  /// Message identifier.
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    NavAction action(String label, IconData icon) =>
+        NavAction(icon: icon, label: label, onPressed: () {});
+    return AdaptiveNavActions(
+      prominentAction: action('Reply', Icons.reply),
+      groups: [
+        NavActionGroup([
+          action('Share', Icons.share),
+          action('Archive', Icons.archive_outlined),
+          action('Label', Icons.label_outline),
+        ]),
+        NavActionGroup([
+          NavAction(
+            icon: Icons.delete_outline,
+            label: 'Delete',
+            isDestructive: true,
+            onPressed: () {},
+          ),
+          action('Mute', Icons.volume_off_outlined),
+          action('Snooze', Icons.snooze),
+        ]),
+      ],
+      overflowItems: [action('Report', Icons.flag_outlined)],
+      child: Scaffold(
+        appBar: AppBar(title: Text('Message $id')),
+        body: Center(child: Text('Message body $id')),
+      ),
+    );
+  }
+}
+
+/// Second tab without actions: only the tabs show.
+class ProfilePage extends StatelessWidget {
+  /// Creates an instance of [ProfilePage].
+  const ProfilePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     final signals = FoldSignals.of(context);
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Adaptive Foldable Example')),
+      appBar: AppBar(title: const Text('Profile')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Adaptive Foldable: $adaptiveFoldableVersion'),
-            const SizedBox(height: 16),
-            Text('Horizontal Size: ${signals.horizontalSizeClass.name}'),
-            Text('Vertical Size: ${signals.verticalSizeClass.name}'),
-            Text('Bar Edge: ${signals.verticalBarEdge?.name ?? "none"}'),
+            Text('adaptive_foldable $adaptiveFoldableVersion'),
             Text('Posture: ${signals.posture.name}'),
-            Text('Active Folds: ${signals.activeFolds.length}'),
-            Text('Occlusions: ${signals.occlusions.length}'),
-            Text('SDK 27.1: ${signals.sdk271}'),
-            Text('Available: ${signals.isAvailable}'),
-            Text('Layout change: ${widget.lastLayoutEvent}'),
+            Text('Bar edge: ${signals.verticalBarEdge?.name ?? "none"}'),
+            Text(
+              'Size: ${signals.viewSize.width.round()} x ${signals.viewSize.height.round()}',
+            ),
           ],
         ),
       ),
