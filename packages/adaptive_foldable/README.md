@@ -2,146 +2,247 @@
 
 A design-agnostic Flutter navigation scaffold with a fold kit. It places your navigation bar at the bottom or on a side edge to match the device (iPhone Duo, Android foldables, iPad, phones), keeps page state across fold, unfold and rotation, and leaves the drawing to you.
 
-> Status: `0.1.0-dev.1` pre-release. Verified on the iPhone Duo simulator (Xcode 27.1+) and the Android foldable emulator only; no physical devices have been tested.
+> **Status: 1.0.0 (simulator-verified)**
+> Verified on the iPhone Duo simulator (Xcode 27.1+) and Android foldable emulator. No physical devices were used during initial verification. See [Hardware Feedback Checklist](https://github.com/andipputra/adaptive_foldable/blob/main/docs/hardware_feedback_checklist.md) if running on physical hardware.
 
-## What you get
+---
 
-- `AdaptiveNavScaffold`: resolves a placement from device signals, keeps the body at a fixed position in a stable `Stack`, and hands a resolved `NavLayout` to your `barBuilder`.
-- `AdaptiveNavActions`: a page publishes its actions upward. Back, overflow and route-synchronised fades come with it.
-- Default Material-style and Cupertino-style bars, built only on `barBuilder` as reference implementations.
-- `FoldSignals`, `FakeFoldSignals` and device presets for tests, and a debug overlay.
+## Quick Start
 
-Runtime dependencies: `flutter` only.
+### 1. Wrap your app in `FoldSignalsScope`
 
-## Install
-
-```yaml
-dependencies:
-  adaptive_foldable: ^0.1.0-dev.1
-```
-
-## Setup
-
-Start the signal bridge once, above the navigator, then use the scaffold at the shell of your app.
+Place `FoldSignalsScope` above your navigator or router to listen to platform bridge and display signals once:
 
 ```dart
-MaterialApp.router(
-  routerConfig: router,
-  builder: (context, child) => FoldSignalsScope(child: child!),
-);
+import 'package:adaptive_foldable/adaptive_foldable.dart';
+import 'package:flutter/material.dart';
 
-// In a GoRouter StatefulShellRoute builder:
-AdaptiveNavScaffold(
-  destinations: const [
-    NavDestination(icon: Icons.inbox_outlined, label: 'Inbox', badgeCount: 7),
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      builder: (context, child) => FoldSignalsScope(child: child!),
+      home: const MainShell(),
+    );
+  }
+}
+```
+
+### 2. Add `AdaptiveNavScaffold`
+
+```dart
+class MainShell extends StatefulWidget {
+  const MainShell({super.key});
+
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  int _currentIndex = 0;
+
+  static const _destinations = [
+    NavDestination(icon: Icons.inbox_outlined, label: 'Inbox', badgeCount: 3),
+    NavDestination(icon: Icons.search, label: 'Search'),
     NavDestination(icon: Icons.person_outline, label: 'Profile'),
-  ],
-  selectedIndex: shell.currentIndex,
-  onSelected: shell.goBranch,
-  body: shell,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return AdaptiveNavScaffold(
+      destinations: _destinations,
+      selectedIndex: _currentIndex,
+      onSelected: (index) => setState(() => _currentIndex = index),
+      body: Center(child: Text('Selected index: $_currentIndex')),
+    );
+  }
+}
+```
+
+By default, the scaffold uses platform-adaptive reference bars:
+- iOS / macOS: `cupertinoBarBuilder` (Cupertino-styled bottom bar or vertical side column).
+- Android / other: `materialBarBuilder` (Material 3 NavigationBar or NavigationRail).
+
+---
+
+## Bring Your Own Bar (`barBuilder`)
+
+Pass a custom `barBuilder` callback to render custom branding or components. The builder receives a pure, pre-calculated `NavLayout`:
+
+```dart
+AdaptiveNavScaffold(
+  destinations: _destinations,
+  selectedIndex: _currentIndex,
+  onSelected: (index) => setState(() => _currentIndex = index),
+  barBuilder: (context, NavLayout layout) {
+    if (layout.placement.isVertical) {
+      return MyCustomRail(layout: layout);
+    }
+    return MyCustomBottomBar(layout: layout);
+  },
+  body: const MyContent(),
 )
 ```
 
-Any router works: pages register actions through the widget tree, not a `NavigatorObserver`. Plain `Navigator`, nested navigators and GoRouter are covered by tests.
+### Writing Custom Bars
 
-## Page actions
+`NavLayout` supplies all layout coordinates and resolved action collections:
+- `layout.geometry`: exact bar frame (`barRect`), camera clearance (`skipRegion`), home indicator padding (`homeIndicatorGap`), and fold cut distance (`foldClearance`). Never hardcode screen insets.
+- `layout.placement.isVertical`: whether the bar is positioned as a leading/trailing column or a bottom bar.
+- `layout.visibleActions` / `layout.overflowedActions`: actions resolved for the current screen width.
+- `layout.onOverflow`: trigger function to open the overflow menu relative to an anchor rectangle.
+- Focus and semantics: keep accessibility traversal in order: Back button, prominent action, action groups, overflow button, destinations.
+
+---
+
+## Per-Page Actions
+
+Inner views publish action items to the shell navigation scaffold without coupling to router state:
 
 ```dart
 AdaptiveNavActions(
-  prominentAction: NavAction(icon: Icons.reply, label: 'Reply', onPressed: reply),
+  prominentAction: NavAction(
+    icon: Icons.add,
+    label: 'Compose',
+    onPressed: () => openComposer(),
+  ),
   groups: [
     NavActionGroup([
-      NavAction(icon: Icons.share, label: 'Share', priority: NavPriority.high, onPressed: share),
-      NavAction(icon: Icons.delete_outline, label: 'Delete', isDestructive: true, onPressed: delete),
+      NavAction(
+        icon: Icons.archive_outlined,
+        label: 'Archive',
+        priority: NavPriority.high,
+        onPressed: () => archiveItem(),
+      ),
+      NavAction(
+        icon: Icons.delete_outline,
+        label: 'Delete',
+        isDestructive: true,
+        onPressed: () => deleteItem(),
+      ),
     ]),
   ],
-  overflowItems: [NavAction(icon: Icons.flag_outlined, label: 'Report', onPressed: report)],
-  compression: NavCompression.navigation, // .task minimises the tab bar first
-  child: const DetailPage(),
+  compression: NavCompression.navigation, // Collapse tabs first when space is tight
+  child: const MessageList(),
 )
 ```
 
-- Every `NavAction` and `NavDestination` needs an `icon` and a non-empty `label`; the label is the tooltip, overflow entry and screen reader text.
-- Actions that do not fit move into an overflow menu, lowest priority and bottom group first. Badged actions rank higher. The menu is `NavOverflowMenu`; pass `overflowBuilder` to replace it, or reuse `NavOverflowMenu` inside your own.
-- A page without `AdaptiveNavActions` shows no actions; the tabs stay.
-- Back appears when the page's own navigator can pop, and pops that navigator with `maybePop`, so `PopScope` is respected.
-- A dialog or sheet leaves the bar in place, dimmed and not tappable.
-- On Material placements (Android), the bar holds the tabs and the prominent action; the other actions arrive, already fitted to the screen width with the rest in the overflow menu, in `NavLayout.headerActions`. Draw them in your top app bar with `MaterialNavBar.headerStrip`, which fades with route transitions. The scaffold does not place that strip for you.
-- `NavPaneScope` is exported for the coming two-pane fold kit; until then only the main pane is drawn.
+- **Back Button**: Appears automatically whenever the current page navigator can pop (`canPop()`), triggering `maybePop()` to honour `PopScope`.
+- **Overflow**: When actions exceed available width, lower-priority and later groups automatically move into the overflow menu.
 
-## Bring your own bar
+---
 
-The builder receives a resolved layout and only draws it.
+## Placement Policies
+
+Control how placement resolves on different screen sizes and postures:
 
 ```dart
+// Enforce Material 3 size classes across all platforms
 AdaptiveNavScaffold(
-  barBuilder: (context, NavLayout layout) => layout.placement.isVertical
-      ? MySideColumn(layout)
-      : MyBottomBar(layout),
+  policy: const MaterialPolicy(),
   // ...
 )
 ```
 
-`NavLayout` carries `placement`, `geometry` (bar rectangle, camera region to skip, item axis, home-indicator gap, fold clearance), `showBack`/`onBack`, `prominentAction`, `visibleActions`, `overflowedActions`, `headerActions`, `tabsCompressed`, `destinations`, `selectedIndex`/`onSelected`, `paneCount`, `posture`, `actionsOpacity` and `onOverflow`.
+- `ApplePolicy` (default on iOS/macOS): Prefers hardware-aligned trailing columns on iPhone Duo and bottom bars on standard phones.
+- `MaterialPolicy` (default on Android/Linux/Windows): Uses bottom bars on compact widths and leading navigation rails on expanded widths.
 
-Notes for custom bars:
+### Custom Policies
 
-- Draw items in the order Back, prominent action, groups, overflow, tabs, and give semantics and focus the same order (`OrdinalSortKey`, `FocusTraversalOrder`).
-- Keep tap targets at least 44 x 44 logical pixels.
-- Multiply the action opacity by `layout.actionsOpacity` while a route transition runs.
-- Call `layout.onOverflow` with the global rectangle of your overflow button; the scaffold shows the menu (or your `overflowBuilder`).
-- Never hard-code insets: use `layout.geometry`.
-
-## Testing
+Implement `NavPlacementPolicy` for bespoke adaptive rules:
 
 ```dart
-final signals = FakeFoldSignals.from(FoldSignalsPresets.duoCoverLandscape);
-await tester.pumpWidget(
-  MaterialApp(
-    builder: (c, child) => FoldSignalsScope(override: signals, child: child!),
-    home: AdaptiveNavScaffold(/* ... */),
-  ),
+class DesktopFirstPolicy implements NavPlacementPolicy {
+  const DesktopFirstPolicy();
+
+  @override
+  NavPlacement resolvePlacement({
+    required FoldSignals signals,
+    required bool hasProminentAction,
+    required int actionCount,
+    required int destinationCount,
+  }) {
+    if (signals.horizontalSizeClass == SizeClass.expanded) {
+      return const NavPlacement.leadingColumn();
+    }
+    return const NavPlacement.bottomBar();
+  }
+}
+```
+
+---
+
+## Fold Kit
+
+`adaptive_foldable` includes pure Flutter layout primitives designed for foldables:
+
+### 1. `FoldAwareTwoPane`
+
+Splits primary and secondary content across the hinge in book posture or landscape:
+
+```dart
+FoldAwareTwoPane(
+  primaryPane: const ListPane(),
+  secondaryPane: const DetailPane(),
+  panePriority: TwoPanePriority.both,
+)
+```
+
+### 2. `FoldAlignedGrid`
+
+A grid that splits columns around the fold line so cards never get cut in half:
+
+```dart
+FoldAlignedGrid(
+  itemCount: items.length,
+  maxCrossAxisExtent: 220,
+  itemBuilder: (context, index) => ItemCard(item: items[index]),
+)
+```
+
+### 3. Fold-Aware Dialogs and Bottom Sheets
+
+Anchor dialogs and sheets to a specific pane when the device is unfolded:
+
+```dart
+// Opens the dialog centered inside the secondary pane
+showFoldAwareDialog(
+  context: context,
+  target: FoldPaneTarget.secondary,
+  builder: (context) => const AlertDialog(title: Text('Details')),
+);
+
+// Opens modal bottom sheet inside the primary pane
+showFoldAwareModalBottomSheet(
+  context: context,
+  target: FoldPaneTarget.primary,
+  builder: (context) => const FilterOptionsSheet(),
 );
 ```
 
-No platform channel is touched. Presets cover the iPhone Duo cover and inner displays, book pose, Split View, Android compact, medium, expanded, book and tabletop, iPhone and iPad.
+---
+
+## Hardware Feedback Checklist
+
+Simulators cannot test physical hinge latency, crease touch distortion, or thermal performance. If testing on physical foldable hardware, refer to the [Hardware Feedback Checklist](https://github.com/andipputra/adaptive_foldable/blob/main/docs/hardware_feedback_checklist.md).
+
+Enable the diagnostic overlay in debug builds:
+```dart
+AdaptiveNavScaffold(
+  debugOverlay: true,
+  // ...
+)
+```
+
+---
 
 ## Requirements
 
-| Requirement | Minimum |
-| --- | --- |
-| Flutter | 3.47 |
-| Dart | 3.13 |
-| iOS deployment target | 15.0 |
-| Xcode | any; Duo features need 27.1+ |
-| Android | Flutter's default `minSdk`; no Android native code |
-| iOS build systems | Swift Package Manager and CocoaPods |
-
-## Xcode 27.1 toolchain workarounds
-
-Two build problems are unrelated to this package:
-
-1. Flutter pods that still declare iOS 13.0. Raise them in your `ios/Podfile`:
-
-   ```ruby
-   post_install do |installer|
-     installer.pods_project.targets.each do |target|
-       flutter_additional_ios_build_settings(target)
-       target.build_configurations.each do |config|
-         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-       end
-     end
-   end
-   ```
-
-2. `lipo` failing on dual-architecture simulator builds with older Flutter. Build the simulator for arm64 only: set `ARCHS = arm64` (and exclude `x86_64`) in the Runner target's build settings.
-
-## Hardware feedback checklist
-
-Simulators cannot prove real timing of reserved-region updates, touch accuracy near the crease, real hinge transitions or performance. If you have a device, please report with a screenshot of the debug overlay (`debugOverlay: true`):
-
-- [ ] Column starts below the camera on the cover display.
-- [ ] Bar never overlaps the fold in book pose.
-- [ ] One `onLayoutChanged` event per fold or unfold.
-- [ ] No flicker of the bar while the hinge moves.
-- [ ] Taps near the crease land on the intended item.
+- Flutter: `>=3.47.0`
+- Dart: `^3.13.0`
+- iOS deployment target: `15.0+`
+- Xcode: `27.1+` for iPhone Duo simulator and native bridge headers

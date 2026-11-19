@@ -28,6 +28,13 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/widgets.dart';
 
+/// Marks an API as experimental and subject to change in future releases.
+const Object experimental = _Experimental();
+
+class _Experimental {
+  const _Experimental();
+}
+
 /// Draws the navigation bar for a resolved [NavLayout].
 typedef NavBarBuilder = Widget Function(BuildContext context, NavLayout layout);
 
@@ -106,6 +113,7 @@ class AdaptiveNavScaffold extends StatefulWidget {
   final bool debugOverlay;
 
   /// Reserved: iOS native overflow menu. Accepted but ignored; experimental.
+  @experimental
   final bool nativeOverflowMenu;
 
   /// Called once per settled change of placement, pane count or posture; never on ordinary rebuilds.
