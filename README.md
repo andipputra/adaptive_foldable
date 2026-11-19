@@ -14,20 +14,6 @@ A design-agnostic Flutter navigation scaffold with a fold kit. It places your na
 
 ---
 
-## Architectural Positioning
-
-| Capability | `adaptive_foldable` | `adaptive_platform_ui` | `foldable` | `iphone_duo_ui_pro` |
-|---|---|---|---|---|
-| **Design-agnostic (`barBuilder`)** | **Yes** (bring your own bar) | No (fixed platform widgets) | N/A (no nav scaffold) | No |
-| **iPhone Duo native column bridge** | **Yes** (native `verticalBarEdge` + reserved regions) | No | No | Partial (opinionated view) |
-| **Android fold / hinge awareness** | **Yes** (`DisplayFeature` safe areas) | No | Yes | No |
-| **Stable Stack (zero state loss)** | **Yes** (body never reparented) | No | N/A | No |
-| **Per-page actions & overflow** | **Yes** (`AdaptiveNavActions` + priority sorting) | No | No | No |
-| **Fold kit (panes, grid, dialogs)** | **Yes** (two-pane, aligned grid, pane targeting) | No | Partial | No |
-| **Runtime dependencies** | **`flutter` only** | Multiple external dependencies | External dependencies | Platform views |
-
----
-
 ## Quick Start
 
 ### 1. Wrap your app in `FoldSignalsScope`
