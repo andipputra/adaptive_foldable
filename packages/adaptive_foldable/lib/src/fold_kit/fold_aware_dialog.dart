@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/src/scaffold/actions/nav_pane_scope.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
 import 'package:flutter/material.dart';
