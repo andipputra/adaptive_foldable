@@ -46,19 +46,39 @@ class MaterialPolicy implements NavPlacementPolicy {
     if (signals.posture == Posture.partiallyOpen) {
       final folds = signals.activeFolds;
       if (folds.any((Rect r) => r.width > r.height)) {
-        return const NavPlacement(NavEdge.bottom, ruleId: ruleTabletop);
+        return const NavPlacement(
+          NavEdge.bottom,
+          ruleId: ruleTabletop,
+          actionsInHeader: true,
+        );
       }
       if (folds.isNotEmpty) {
-        return const NavPlacement(NavEdge.leading, ruleId: ruleBook);
+        return const NavPlacement(
+          NavEdge.leading,
+          ruleId: ruleBook,
+          actionsInHeader: true,
+        );
       }
     }
     final width = signals.viewSize.width;
     if (width < compactMaxWidth) {
-      return const NavPlacement(NavEdge.bottom, ruleId: ruleCompact);
+      return const NavPlacement(
+        NavEdge.bottom,
+        ruleId: ruleCompact,
+        actionsInHeader: true,
+      );
     }
     if (width < expandedMinWidth) {
-      return const NavPlacement(NavEdge.leading, ruleId: ruleMedium);
+      return const NavPlacement(
+        NavEdge.leading,
+        ruleId: ruleMedium,
+        actionsInHeader: true,
+      );
     }
-    return const NavPlacement(NavEdge.leading, ruleId: ruleExpanded);
+    return const NavPlacement(
+      NavEdge.leading,
+      ruleId: ruleExpanded,
+      actionsInHeader: true,
+    );
   }
 }

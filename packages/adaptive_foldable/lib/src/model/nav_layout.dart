@@ -1,3 +1,5 @@
+import 'dart:ui' show Rect;
+
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/nav_action_group.dart';
 import 'package:adaptive_foldable/src/model/nav_destination.dart';
@@ -25,6 +27,8 @@ class NavLayout {
     this.onSelected,
     this.paneCount = 1,
     this.posture = Posture.unknown,
+    this.actionsOpacity = 1,
+    this.onOverflow,
   }) : assert(paneCount == 1 || paneCount == 2, 'paneCount must be 1 or 2');
 
   /// The edge holding the bar.
@@ -69,6 +73,14 @@ class NavLayout {
   /// The device posture.
   final Posture posture;
 
+  /// Opacity from 0 to 1 that bars apply to action items while a route transition fades them.
+  final double actionsOpacity;
+
+  /// Opens the overflow menu anchored at the given global rectangle of the overflow button.
+  ///
+  /// Null when nothing overflowed.
+  final ValueChanged<Rect>? onOverflow;
+
   /// Returns a copy with the given fields replaced.
   ///
   /// Nullable fields keep their value when omitted; pass the matching `clear*`
@@ -91,6 +103,9 @@ class NavLayout {
     bool clearOnSelected = false,
     int? paneCount,
     Posture? posture,
+    double? actionsOpacity,
+    ValueChanged<Rect>? onOverflow,
+    bool clearOnOverflow = false,
   }) => NavLayout(
     placement: placement ?? this.placement,
     geometry: geometry ?? this.geometry,
@@ -108,6 +123,8 @@ class NavLayout {
     onSelected: clearOnSelected ? null : (onSelected ?? this.onSelected),
     paneCount: paneCount ?? this.paneCount,
     posture: posture ?? this.posture,
+    actionsOpacity: actionsOpacity ?? this.actionsOpacity,
+    onOverflow: clearOnOverflow ? null : (onOverflow ?? this.onOverflow),
   );
 
   @override
@@ -126,7 +143,9 @@ class NavLayout {
       other.selectedIndex == selectedIndex &&
       other.onSelected == onSelected &&
       other.paneCount == paneCount &&
-      other.posture == posture;
+      other.posture == posture &&
+      other.actionsOpacity == actionsOpacity &&
+      other.onOverflow == onOverflow;
 
   @override
   int get hashCode => Object.hash(
@@ -144,5 +163,7 @@ class NavLayout {
     onSelected,
     paneCount,
     posture,
+    actionsOpacity,
+    onOverflow,
   );
 }
