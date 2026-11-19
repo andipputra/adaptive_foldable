@@ -1,5 +1,8 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
+import 'package:adaptive_foldable_example/screens/grid_screen.dart';
+import 'package:adaptive_foldable_example/screens/presentations_screen.dart';
+import 'package:adaptive_foldable_example/screens/two_pane_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,6 +31,12 @@ class _MyAppState extends State<MyApp> {
               label: 'Inbox',
               badgeCount: 7,
             ),
+            NavDestination(
+              icon: Icons.view_sidebar_outlined,
+              label: 'Two-Pane',
+            ),
+            NavDestination(icon: Icons.grid_view_outlined, label: 'Grid'),
+            NavDestination(icon: Icons.layers_outlined, label: 'Modals'),
             NavDestination(icon: Icons.person_outline, label: 'Profile'),
           ],
           selectedIndex: shell.currentIndex,
@@ -48,6 +57,27 @@ class _MyAppState extends State<MyApp> {
                         MessagePage(id: state.pathParameters['id']!),
                   ),
                 ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/two-pane',
+                builder: (_, _) => const TwoPaneScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/grid', builder: (_, _) => const GridScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/modals',
+                builder: (_, _) => const PresentationsScreen(),
               ),
             ],
           ),

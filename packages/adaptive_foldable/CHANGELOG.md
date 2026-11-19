@@ -1,3 +1,16 @@
+## 0.2.0-dev.1
+
+Pre-release (Milestone M3). Verified on simulator and emulator only.
+
+* Fold kit: `FoldAwareTwoPane` with non-reparenting state preservation across layout switches and folding/unfolding.
+* Fold kit: `FoldAlignedGrid` mirroring columns around active vertical folds with zero fold crease intersection.
+* Fold kit: `showFoldAwareDialog` and `showFoldAwareModalBottomSheet` with target pane anchoring (`auto`, `start`, `end`).
+* Pane scoping & registry: `NavPaneScope` with standard IDs (`main`, `start`, `end`) and `NavPaneRegistry`.
+* Two-pane action routing: `resolvePaneActions` and `resolveColumnOwnerPaneId` implementing Apple split view rules with `placement` overrides.
+* Pane header: `NavPaneHeaderBar` for rendering pane-level title, leading control, and published actions.
+* Golden tests covering book pose, Split View, RTL, tabletop, and fold-anchored dialogs.
+* Example app updated with Two-Pane, Grid, and Modals demonstration screens.
+
 ## 0.1.0-dev.1
 
 Pre-release. Verified on simulator and emulator only.

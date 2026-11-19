@@ -9,7 +9,19 @@ export 'package:adaptive_foldable/src/debug/debug_report.dart'
     show formatSignalsReport;
 export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
     show FoldDebugOverlay;
+export 'package:adaptive_foldable/src/fold_kit/fold_aligned_grid.dart'
+    show FoldAlignedGrid;
+export 'package:adaptive_foldable/src/fold_kit/fold_aware_bottom_sheet.dart'
+    show showFoldAwareModalBottomSheet;
+export 'package:adaptive_foldable/src/fold_kit/fold_aware_dialog.dart'
+    show FoldPaneTarget, showFoldAwareDialog;
+export 'package:adaptive_foldable/src/fold_kit/fold_aware_two_pane.dart'
+    show FoldAwareTwoPane, TwoPanePriority;
+export 'package:adaptive_foldable/src/fold_kit/nav_pane_header_bar.dart'
+    show NavPaneHeaderBar;
 export 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
+export 'package:adaptive_foldable/src/layout/pane_action_resolver.dart'
+    show PaneActionAssignment, resolveColumnOwnerPaneId, resolvePaneActions;
 export 'package:adaptive_foldable/src/model/nav_action.dart';
 export 'package:adaptive_foldable/src/model/nav_action_group.dart';
 export 'package:adaptive_foldable/src/model/nav_action_placement.dart';
@@ -28,6 +40,8 @@ export 'package:adaptive_foldable/src/policy/nav_placement_policy.dart';
 export 'package:adaptive_foldable/src/scaffold/actions/adaptive_nav_actions.dart';
 export 'package:adaptive_foldable/src/scaffold/actions/nav_overflow_menu.dart'
     show NavOverflowMenu;
+export 'package:adaptive_foldable/src/scaffold/actions/nav_pane_registry.dart'
+    show NavPaneEntry, NavPaneRegistry;
 export 'package:adaptive_foldable/src/scaffold/actions/nav_pane_scope.dart';
 export 'package:adaptive_foldable/src/scaffold/adaptive_nav_scaffold.dart';
 export 'package:adaptive_foldable/src/scaffold/nav_adapters.dart'
@@ -41,4 +55,4 @@ export 'package:adaptive_foldable/src/signals/fold_signals_scope.dart'
 export 'package:adaptive_foldable/src/signals/signal_types.dart';
 
 /// The current version of the adaptive_foldable package.
-const String adaptiveFoldableVersion = '0.1.0-dev.1';
+const String adaptiveFoldableVersion = '0.2.0-dev.1';

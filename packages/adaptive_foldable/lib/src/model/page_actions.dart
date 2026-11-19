@@ -37,6 +37,13 @@ class PageActions {
   int get groupActionCount =>
       groups.fold(0, (sum, g) => sum + g.actions.length);
 
+  /// Whether no actions are published.
+  bool get isEmpty =>
+      prominentAction == null && groups.isEmpty && overflowItems.isEmpty;
+
+  /// Whether any actions are published.
+  bool get isNotEmpty => !isEmpty;
+
   /// Whether [other] would draw the same bar: equal in everything except the `onPressed` callbacks.
   ///
   /// Pages usually pass inline lambdas, which are never equal across rebuilds;
