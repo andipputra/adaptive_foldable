@@ -1,15 +1,76 @@
 # adaptive_foldable
 
-A design-agnostic Flutter navigation scaffold with a fold kit.
+A design-agnostic Flutter navigation scaffold with a fold kit. It places your navigation bar at the bottom or on a side edge to match the device (iPhone Duo, Android foldables, iPad, phones), keeps page state across fold, unfold and rotation, and leaves the drawing to you.
 
-## Overview
+> **Status: 1.0.0 (simulator-verified)**
+> Verified on the iPhone Duo simulator (Xcode 27.1+) and Android foldable emulator. No physical devices were used during initial verification. See [Hardware Feedback Checklist](docs/hardware_feedback_checklist.md) if running on physical hardware.
 
-`adaptive_foldable` resolves device posture, display features, size classes, and iOS `verticalBarEdge` into a single resolved navigation layout. It provides a flexible builder API allowing apps to bring their own navigation bar design or use platform-adaptive defaults across mobile, tablet, and foldable devices (including iPhone Duo and Android foldables).
+---
 
 ## Workspace Structure
 
-- `packages/adaptive_foldable/`: The core plugin package (`flutter` runtime dependency only).
-- `packages/adaptive_foldable/example/`: Example demonstration application.
+- `packages/adaptive_foldable/`: The core Flutter plugin package (`flutter` runtime dependency only).
+- `packages/adaptive_foldable/example/`: Example demonstration application showing standard, two-pane, and custom layouts.
+
+---
+
+## Quick Start
+
+### 1. Wrap your app in `FoldSignalsScope`
+
+Place `FoldSignalsScope` above your navigator or router to listen to platform bridge and display signals once:
+
+```dart
+import 'package:adaptive_foldable/adaptive_foldable.dart';
+import 'package:flutter/material.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      builder: (context, child) => FoldSignalsScope(child: child!),
+      home: const MainShell(),
+    );
+  }
+}
+```
+
+### 2. Add `AdaptiveNavScaffold`
+
+```dart
+class MainShell extends StatefulWidget {
+  const MainShell({super.key});
+
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  int _currentIndex = 0;
+
+  static const _destinations = [
+    NavDestination(icon: Icons.inbox_outlined, label: 'Inbox', badgeCount: 3),
+    NavDestination(icon: Icons.search, label: 'Search'),
+    NavDestination(icon: Icons.person_outline, label: 'Profile'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return AdaptiveNavScaffold(
+      destinations: _destinations,
+      selectedIndex: _currentIndex,
+      onSelected: (index) => setState(() => _currentIndex = index),
+      body: Center(child: Text('Selected index: $_currentIndex')),
+    );
+  }
+}
+```
+
+---
 
 ## Toolchain Notes
 
@@ -31,3 +92,9 @@ post_install do |installer|
   end
 end
 ```
+
+---
+
+## Hardware Feedback
+
+Simulators cannot verify hardware timing or crease touch accuracy. If you have physical foldable hardware, please consult the [Hardware Feedback Checklist](docs/hardware_feedback_checklist.md).
