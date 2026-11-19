@@ -11,7 +11,11 @@ export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
     show FoldDebugOverlay;
 export 'package:adaptive_foldable/src/fold_kit/fold_aware_two_pane.dart'
     show FoldAwareTwoPane, TwoPanePriority;
+export 'package:adaptive_foldable/src/fold_kit/nav_pane_header_bar.dart'
+    show NavPaneHeaderBar;
 export 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
+export 'package:adaptive_foldable/src/layout/pane_action_resolver.dart'
+    show PaneActionAssignment, resolveColumnOwnerPaneId, resolvePaneActions;
 export 'package:adaptive_foldable/src/model/nav_action.dart';
 export 'package:adaptive_foldable/src/model/nav_action_group.dart';
 export 'package:adaptive_foldable/src/model/nav_action_placement.dart';
