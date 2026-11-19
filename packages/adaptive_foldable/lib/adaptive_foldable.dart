@@ -11,6 +11,10 @@ export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
     show FoldDebugOverlay;
 export 'package:adaptive_foldable/src/fold_kit/fold_aligned_grid.dart'
     show FoldAlignedGrid;
+export 'package:adaptive_foldable/src/fold_kit/fold_aware_bottom_sheet.dart'
+    show showFoldAwareModalBottomSheet;
+export 'package:adaptive_foldable/src/fold_kit/fold_aware_dialog.dart'
+    show FoldPaneTarget, showFoldAwareDialog;
 export 'package:adaptive_foldable/src/fold_kit/fold_aware_two_pane.dart'
     show FoldAwareTwoPane, TwoPanePriority;
 export 'package:adaptive_foldable/src/fold_kit/nav_pane_header_bar.dart'
