@@ -94,6 +94,17 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      title: 'Adaptive Foldable Example',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.indigo,
+        brightness: Brightness.light,
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.indigo,
+        brightness: Brightness.dark,
+      ),
       routerConfig: _router,
       builder: (context, child) => FoldSignalsScope(child: child!),
     );
