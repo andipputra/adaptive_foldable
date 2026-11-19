@@ -3,6 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('package exports version constant', () {
-    expect(adaptiveFoldableVersion, '0.2.0-dev.1');
+    expect(adaptiveFoldableVersion, '1.0.0');
   });
 }

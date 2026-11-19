@@ -55,4 +55,4 @@ export 'package:adaptive_foldable/src/signals/fold_signals_scope.dart'
 export 'package:adaptive_foldable/src/signals/signal_types.dart';
 
 /// The current version of the adaptive_foldable package.
-const String adaptiveFoldableVersion = '0.2.0-dev.1';
+const String adaptiveFoldableVersion = '1.0.0';
