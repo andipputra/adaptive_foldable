@@ -9,6 +9,8 @@ export 'package:adaptive_foldable/src/debug/debug_report.dart'
     show formatSignalsReport;
 export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
     show FoldDebugOverlay;
+export 'package:adaptive_foldable/src/fold_kit/fold_aware_two_pane.dart'
+    show FoldAwareTwoPane, TwoPanePriority;
 export 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
 export 'package:adaptive_foldable/src/model/nav_action.dart';
 export 'package:adaptive_foldable/src/model/nav_action_group.dart';
