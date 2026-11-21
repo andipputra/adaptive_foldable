@@ -397,5 +397,35 @@ void main() {
       expect(inset, lessThan(300));
       expect(inset, greaterThanOrEqualTo(0));
     });
+
+    testWidgets('custom onBack callback intercepts back navigation', (
+      tester,
+    ) async {
+      bool customBackInvoked = false;
+      final s = _sig(size: const Size(400, 800));
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = s.viewSize;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (c, child) => FoldSignalsScope(override: s, child: child!),
+          home: AdaptiveNavScaffold(
+            destinations: _dests,
+            selectedIndex: 0,
+            onSelected: (_) {},
+            onBack: () => customBackInvoked = true,
+            policy: const MaterialPolicy(),
+            body: const SizedBox(),
+          ),
+        ),
+      );
+
+      expect(find.text('Back'), findsOneWidget);
+      await tester.tap(find.text('Back'));
+      await tester.pump();
+
+      expect(customBackInvoked, isTrue);
+    });
   });
 }

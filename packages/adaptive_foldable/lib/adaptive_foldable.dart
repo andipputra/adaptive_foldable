@@ -17,6 +17,8 @@ export 'package:adaptive_foldable/src/fold_kit/fold_aware_dialog.dart'
     show FoldPaneTarget, showFoldAwareDialog;
 export 'package:adaptive_foldable/src/fold_kit/fold_aware_two_pane.dart'
     show FoldAwareTwoPane, TwoPanePriority;
+export 'package:adaptive_foldable/src/fold_kit/fold_builder.dart'
+    show FoldBuilder, FoldWidgetBuilder;
 export 'package:adaptive_foldable/src/fold_kit/nav_pane_header_bar.dart'
     show NavPaneHeaderBar;
 export 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
@@ -55,4 +57,4 @@ export 'package:adaptive_foldable/src/signals/fold_signals_scope.dart'
 export 'package:adaptive_foldable/src/signals/signal_types.dart';
 
 /// The current version of the adaptive_foldable package.
-const String adaptiveFoldableVersion = '1.0.0';
+const String adaptiveFoldableVersion = '1.0.1';

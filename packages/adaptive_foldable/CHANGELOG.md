@@ -1,3 +1,17 @@
+## 1.0.1
+
+* **Fold Kit**:
+  * Added `FoldBuilder` widget to rebuild UI based on ambient `FoldSignals`.
+  * Preserved physical fold alignment in `FoldAlignedGrid` for RTL layouts via explicit LTR row direction.
+  * Wrapped each pane in `FoldAwareTwoPane` in a `FocusTraversalGroup`.
+  * Checked `NavAction.enabled` in `NavPaneHeaderBar` action buttons and popup menu items; removed redundant outer `Semantics`.
+* **Scaffold & Navigation**:
+  * Added optional `onBack` callback to `AdaptiveNavScaffold` and `NavBackController` to allow custom navigation interception before fallback `Navigator.maybePop`.
+  * Added Escape key shortcut (`DismissIntent`) to `NavOverflowMenu`, responsive row height based on `TextScaler`, and `FocusTraversalGroup`.
+* **Bars & Accessibility**:
+  * Set `TextScaler.noScaling` on `NavBarItem` badge text to prevent badge overflow at large text scales.
+  * Adjusted Cupertino light mode inactive color from `#8E8E93` to `#636366` to satisfy WCAG AA contrast (>=4.5:1 against `#F9F9F9`).
+
 ## 1.0.0
 
 First stable release. Labelled **simulator-verified** (verified on the iPhone Duo simulator in Xcode 27.1+ and Android foldable emulator). Physical hardware testing checklist published in `docs/hardware_feedback_checklist.md`.

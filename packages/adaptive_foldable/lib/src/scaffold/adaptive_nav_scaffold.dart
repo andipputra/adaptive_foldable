@@ -79,6 +79,7 @@ class AdaptiveNavScaffold extends StatefulWidget {
     this.nativeOverflowMenu = false,
     this.onLayoutChanged,
     this.extendBodyBehindBar = false,
+    this.onBack,
   }) : assert(destinations.length > 0, 'destinations must not be empty'),
        assert(
          selectedIndex >= 0 && selectedIndex < destinations.length,
@@ -124,6 +125,9 @@ class AdaptiveNavScaffold extends StatefulWidget {
   /// Content stays clear: `MediaQuery.padding` still reserves the bar extent.
   /// Has no effect on a bottom bar, or when a fold cut the bar short.
   final bool extendBodyBehindBar;
+
+  /// Optional callback invoked when the Back action is triggered, before fallback [Navigator.maybePop].
+  final VoidCallback? onBack;
 
   @override
   State<AdaptiveNavScaffold> createState() => _AdaptiveNavScaffoldState();
@@ -468,7 +472,10 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
   ) {
     final entry = view.entry;
     final anchorEntry = entry ?? _registry.anchorFor(NavPaneScope.mainPane);
-    final showBack = NavBackController.canGoBack(anchorEntry);
+    final showBack = NavBackController.canGoBack(
+      anchorEntry,
+      hasCustomBack: widget.onBack != null,
+    );
     final actions = entry?.actions ?? PageActions.empty;
     final extent = geometry.itemAxis == NavAxis.vertical
         ? geometry.barRect.height
@@ -489,7 +496,9 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
       );
       return base.copyWith(
         showBack: showBack,
-        onBack: showBack ? () => NavBackController.goBack(anchorEntry) : null,
+        onBack: showBack
+            ? () => NavBackController.goBack(anchorEntry, onBack: widget.onBack)
+            : null,
         prominentAction: actions.prominentAction,
         headerActions: fit.visibleGroups,
         overflowedActions: fit.overflowed,
@@ -510,7 +519,9 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
     );
     return base.copyWith(
       showBack: showBack,
-      onBack: showBack ? () => NavBackController.goBack(anchorEntry) : null,
+      onBack: showBack
+          ? () => NavBackController.goBack(anchorEntry, onBack: widget.onBack)
+          : null,
       prominentAction: actions.prominentAction,
       visibleActions: fit.visibleGroups,
       overflowedActions: fit.overflowed,

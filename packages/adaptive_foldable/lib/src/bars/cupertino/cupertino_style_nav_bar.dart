@@ -80,7 +80,7 @@ class CupertinoStyleNavBar extends StatelessWidget {
       : const NavBarColors(
           background: Color(0xF0F9F9F9),
           active: Color(0xFF007AFF),
-          inactive: Color(0xFF8E8E93),
+          inactive: Color(0xFF636366),
           border: Color(0x4D3C3C43),
         );
 }

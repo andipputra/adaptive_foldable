@@ -198,6 +198,7 @@ class _Badge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Text(
           count > 99 ? '99+' : '$count',
+          textScaler: TextScaler.noScaling,
           style: const TextStyle(
             fontSize: 10,
             color: Color(0xFFFFFFFF),

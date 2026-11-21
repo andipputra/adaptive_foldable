@@ -116,10 +116,12 @@ class _FoldAwareTwoPaneState extends State<FoldAwareTwoPane> {
                 offstage: !startVisible,
                 child: TickerMode(
                   enabled: startVisible,
-                  child: NavPaneScope(
-                    paneId: NavPaneScope.startPane,
-                    isPrimary: true,
-                    child: widget.start,
+                  child: FocusTraversalGroup(
+                    child: NavPaneScope(
+                      paneId: NavPaneScope.startPane,
+                      isPrimary: true,
+                      child: widget.start,
+                    ),
                   ),
                 ),
               ),
@@ -136,10 +138,12 @@ class _FoldAwareTwoPaneState extends State<FoldAwareTwoPane> {
                 offstage: !endVisible,
                 child: TickerMode(
                   enabled: endVisible,
-                  child: NavPaneScope(
-                    paneId: NavPaneScope.endPane,
-                    isPrimary: false,
-                    child: widget.end,
+                  child: FocusTraversalGroup(
+                    child: NavPaneScope(
+                      paneId: NavPaneScope.endPane,
+                      isPrimary: false,
+                      child: widget.end,
+                    ),
                   ),
                 ),
               ),
