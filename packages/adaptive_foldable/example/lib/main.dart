@@ -1,10 +1,10 @@
-// ignore_for_file: deprecated_member_use -- cupertino.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
+// ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
 import 'package:adaptive_foldable_example/screens/grid_screen.dart';
 import 'package:adaptive_foldable_example/screens/presentations_screen.dart';
 import 'package:adaptive_foldable_example/screens/two_pane_screen.dart';
 import 'package:adaptive_foldable_example/widgets/example_page.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
@@ -40,29 +40,29 @@ class _MyAppState extends State<MyApp> {
         builder: (context, state, shell) => AdaptiveNavScaffold(
           destinations: const [
             NavDestination(
-              icon: CupertinoIcons.tray,
-              selectedIcon: CupertinoIcons.tray_fill,
+              icon: Icons.inbox_outlined,
+              selectedIcon: Icons.inbox,
               label: 'Inbox',
               badgeCount: 7,
               sfSymbol: 'tray',
             ),
             NavDestination(
-              icon: CupertinoIcons.sidebar_right,
+              icon: Icons.vertical_split_outlined,
               label: 'Two-Pane',
               sfSymbol: 'sidebar.right',
             ),
             NavDestination(
-              icon: CupertinoIcons.square_grid_2x2,
+              icon: Icons.grid_view_outlined,
               label: 'Grid',
               sfSymbol: 'square.grid.2x2',
             ),
             NavDestination(
-              icon: CupertinoIcons.layers,
+              icon: Icons.layers_outlined,
               label: 'Modals',
               sfSymbol: 'square.3.layers.3d',
             ),
             NavDestination(
-              icon: CupertinoIcons.person,
+              icon: Icons.person_outline,
               label: 'Profile',
               sfSymbol: 'person',
             ),
@@ -73,7 +73,7 @@ class _MyAppState extends State<MyApp> {
           selectedIndex: shell.currentIndex,
           onSelected: shell.goBranch,
           debugOverlay: false,
-          backgroundColor: CupertinoTheme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           extendBodyBehindBar: false,
           body: shell,
         ),
@@ -126,9 +126,13 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp.router(
+    return MaterialApp.router(
       title: 'Adaptive Foldable Example',
-      theme: const CupertinoThemeData(primaryColor: CupertinoColors.systemBlue),
+      theme: ThemeData(colorSchemeSeed: Colors.indigo),
+      darkTheme: ThemeData(
+        colorSchemeSeed: Colors.indigo,
+        brightness: Brightness.dark,
+      ),
       routerConfig: _router,
       builder: (context, child) => FoldSignalsScope(child: child!),
     );
@@ -145,11 +149,9 @@ class StartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Choose navigation'),
-      ),
-      child: SafeArea(
+    return Scaffold(
+      appBar: AppBar(title: const Text('Choose navigation')),
+      body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -157,16 +159,16 @@ class StartPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Native uses UIKit on iOS and falls back to the Cupertino-style bar elsewhere. Default uses the package bar for the platform.',
+                'Native uses UIKit on iOS and falls back to the Material bar elsewhere. Default picks the Material or Cupertino-style bar from the platform.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              CupertinoButton.filled(
+              FilledButton(
                 onPressed: () => onSelected(true),
                 child: const Text('Native'),
               ),
               const SizedBox(height: 12),
-              CupertinoButton(
+              TextButton(
                 onPressed: () => onSelected(false),
                 child: const Text('Default'),
               ),
@@ -189,7 +191,7 @@ class InboxPage extends StatelessWidget {
       groups: [
         NavActionGroup([
           NavAction(
-            icon: CupertinoIcons.refresh,
+            icon: Icons.refresh,
             sfSymbol: 'arrow.clockwise',
             label: 'Refresh',
             onPressed: () {},
@@ -201,14 +203,14 @@ class InboxPage extends StatelessWidget {
         storageKey: const PageStorageKey('inbox'),
         slivers: [
           SliverToBoxAdapter(
-            child: CupertinoListSection.insetGrouped(
+            child: ExampleSection(
               children: [
                 for (var i = 0; i < 40; i++)
-                  CupertinoListTile.notched(
-                    leading: const Icon(CupertinoIcons.mail),
+                  ListTile(
+                    leading: const Icon(Icons.mail_outline),
                     title: Text('Message $i'),
                     subtitle: const Text('Tap to read'),
-                    trailing: const CupertinoListTileChevron(),
+                    trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go('/inbox/message/$i'),
                   ),
               ],
@@ -233,38 +235,34 @@ class MessagePage extends StatelessWidget {
     NavAction action(String label, IconData icon, String symbol) =>
         NavAction(icon: icon, sfSymbol: symbol, label: label, onPressed: () {});
     return AdaptiveNavActions(
-      prominentAction: action(
-        'Reply',
-        CupertinoIcons.reply,
-        'arrowshape.turn.up.left',
-      ),
+      prominentAction: action('Reply', Icons.reply, 'arrowshape.turn.up.left'),
       groups: [
         NavActionGroup([
-          action('Share', CupertinoIcons.share, 'square.and.arrow.up'),
-          action('Archive', CupertinoIcons.archivebox, 'archivebox'),
-          action('Label', CupertinoIcons.tag, 'tag'),
+          action('Share', Icons.share, 'square.and.arrow.up'),
+          action('Archive', Icons.archive_outlined, 'archivebox'),
+          action('Label', Icons.label_outline, 'tag'),
         ]),
         NavActionGroup([
           NavAction(
-            icon: CupertinoIcons.delete,
+            icon: Icons.delete_outline,
             sfSymbol: 'trash',
             label: 'Delete',
             isDestructive: true,
             onPressed: () {},
           ),
-          action('Mute', CupertinoIcons.bell_slash, 'bell.slash'),
-          action('Snooze', CupertinoIcons.moon_zzz, 'moon.zzz'),
+          action('Mute', Icons.notifications_off_outlined, 'bell.slash'),
+          action('Snooze', Icons.snooze, 'moon.zzz'),
         ]),
       ],
-      overflowItems: [action('Report', CupertinoIcons.flag, 'flag')],
+      overflowItems: [action('Report', Icons.flag_outlined, 'flag')],
       child: ExampleScrollPage(
         title: 'Message $id',
         slivers: [
           SliverToBoxAdapter(
-            child: CupertinoListSection.insetGrouped(
+            child: ExampleSection(
               children: [
-                CupertinoListTile.notched(
-                  leading: const Icon(CupertinoIcons.person_crop_circle),
+                ListTile(
+                  leading: const Icon(Icons.account_circle_outlined),
                   title: const Text('From: Ada Lovelace'),
                   subtitle: const Text('To: you'),
                 ),
@@ -272,7 +270,7 @@ class MessagePage extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     'Message body $id',
-                    style: CupertinoTheme.of(context).textTheme.textStyle,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
               ],
@@ -293,35 +291,32 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final signals = FoldSignals.of(context);
     Widget row(IconData icon, String text) =>
-        CupertinoListTile.notched(leading: Icon(icon), title: Text(text));
+        ListTile(leading: Icon(icon), title: Text(text));
     return ExampleScrollPage(
       title: 'Profile',
       slivers: [
         SliverToBoxAdapter(
-          child: CupertinoListSection.insetGrouped(
+          child: ExampleSection(
             header: const Text('Package'),
             children: [
               row(
-                CupertinoIcons.cube_box,
+                Icons.inventory_2_outlined,
                 'adaptive_foldable $adaptiveFoldableVersion',
               ),
             ],
           ),
         ),
         SliverToBoxAdapter(
-          child: CupertinoListSection.insetGrouped(
+          child: ExampleSection(
             header: const Text('Live signals'),
             children: [
+              row(Icons.screen_rotation, 'Posture: ${signals.posture.name}'),
               row(
-                CupertinoIcons.device_phone_landscape,
-                'Posture: ${signals.posture.name}',
-              ),
-              row(
-                CupertinoIcons.sidebar_right,
+                Icons.vertical_split_outlined,
                 'Bar edge: ${signals.verticalBarEdge?.name ?? "none"}',
               ),
               row(
-                CupertinoIcons.arrow_up_left_arrow_down_right,
+                Icons.open_in_full,
                 'Size: ${signals.viewSize.width.round()} x ${signals.viewSize.height.round()}',
               ),
             ],

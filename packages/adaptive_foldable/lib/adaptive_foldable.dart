@@ -22,6 +22,8 @@ export 'package:adaptive_foldable/src/fold_kit/fold_aware_two_pane.dart'
     show FoldAwareTwoPane, TwoPanePriority;
 export 'package:adaptive_foldable/src/fold_kit/fold_builder.dart'
     show FoldBuilder, FoldWidgetBuilder;
+export 'package:adaptive_foldable/src/fold_kit/fold_pane_modal.dart'
+    show closeFoldAwareModal;
 export 'package:adaptive_foldable/src/fold_kit/nav_pane_header_bar.dart'
     show NavPaneHeaderBar;
 export 'package:adaptive_foldable/src/layout/geometry_resolver.dart';

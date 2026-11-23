@@ -1,6 +1,7 @@
-// ignore_for_file: deprecated_member_use -- cupertino.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
+// ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:adaptive_foldable_example/widgets/example_page.dart';
+import 'package:flutter/material.dart';
 
 /// Item data model for the two-pane example.
 class DocumentItem {
@@ -83,7 +84,7 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
     final selectedDoc = sampleDocuments[_selectedIndex];
 
     return ColoredBox(
-      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      color: Theme.of(context).colorScheme.surface,
       child: LayoutBuilder(
         builder: (context, constraints) {
           // Mirrors FoldAwareTwoPane's default minimums (280 + 320).
@@ -110,7 +111,7 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
       groups: [
         NavActionGroup([
           NavAction(
-            icon: CupertinoIcons.line_horizontal_3_decrease,
+            icon: Icons.filter_list,
             sfSymbol: 'line.3.horizontal.decrease',
             label: 'Filter',
             onPressed: () {},
@@ -121,24 +122,20 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
         children: [
           NavPaneHeaderBar(
             title: const Text('Documents'),
-            leading: const Icon(CupertinoIcons.folder),
+            leading: const Icon(Icons.folder_outlined),
           ),
           Expanded(
             child: ListView(
               key: const PageStorageKey('two_pane_list'),
               children: [
-                CupertinoListSection.insetGrouped(
+                ExampleSection(
                   children: [
                     for (var i = 0; i < sampleDocuments.length; i++)
-                      CupertinoListTile.notched(
-                        backgroundColor: i == _selectedIndex
-                            ? CupertinoColors.systemBlue
-                                  .resolveFrom(context)
-                                  .withValues(alpha: 0.12)
-                            : null,
+                      ListTile(
+                        selected: i == _selectedIndex,
                         title: Text(sampleDocuments[i].title),
                         subtitle: Text(sampleDocuments[i].date),
-                        trailing: const CupertinoListTileChevron(),
+                        trailing: const Icon(Icons.chevron_right),
                         onTap: () => setState(() {
                           _selectedIndex = i;
                           _selected = true;
@@ -158,7 +155,7 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
   Widget _buildDetailPane(BuildContext context, DocumentItem doc) {
     return AdaptiveNavActions(
       prominentAction: NavAction(
-        icon: CupertinoIcons.pencil,
+        icon: Icons.edit_outlined,
         sfSymbol: 'pencil',
         label: 'Edit',
         onPressed: () {},
@@ -166,13 +163,13 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
       groups: [
         NavActionGroup([
           NavAction(
-            icon: CupertinoIcons.share,
+            icon: Icons.share,
             sfSymbol: 'square.and.arrow.up',
             label: 'Share',
             onPressed: () {},
           ),
           NavAction(
-            icon: CupertinoIcons.archivebox,
+            icon: Icons.archive_outlined,
             sfSymbol: 'archivebox',
             label: 'Archive',
             onPressed: () {},
@@ -184,17 +181,13 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
         children: [
           NavPaneHeaderBar(
             title: Text(doc.title),
-            leading: CupertinoButton(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size.square(44),
+            leading: IconButton(
+              tooltip: 'Back to documents',
               onPressed: () => setState(() {
                 _priority = TwoPanePriority.start;
                 _selected = false;
               }),
-              child: const Icon(
-                CupertinoIcons.back,
-                semanticLabel: 'Back to documents',
-              ),
+              icon: const Icon(Icons.arrow_back),
             ),
           ),
           Expanded(
@@ -205,23 +198,19 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
                 children: [
                   Text(
                     doc.title,
-                    style: CupertinoTheme.of(context)
-                        .textTheme
-                        .navLargeTitleTextStyle,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Updated ${doc.date}',
-                    style: CupertinoTheme.of(context)
-                        .textTheme
-                        .tabLabelTextStyle,
+                    style: Theme.of(context).textTheme.labelMedium,
                   ),
                   const SizedBox(height: 16),
                   const SizedBox(height: 16),
                   Text(
                     doc.content,
-                    style: CupertinoTheme.of(context).textTheme.textStyle
-                        .copyWith(height: 1.4),
+                    style: Theme.of(context).textTheme.bodyLarge
+                        ?.copyWith(height: 1.4),
                   ),
                 ],
               ),

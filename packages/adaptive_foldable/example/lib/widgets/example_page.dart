@@ -1,7 +1,7 @@
-// ignore_for_file: deprecated_member_use -- cupertino.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
-import 'package:flutter/cupertino.dart';
+// ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
+import 'package:flutter/material.dart';
 
-/// Page with an iOS large title that collapses on scroll, on a grouped background.
+/// Page with a Material large title that collapses on scroll, .
 ///
 /// The bar column or bottom bar owns Back, so the title bar never adds its own.
 class ExampleScrollPage extends StatelessWidget {
@@ -25,15 +25,13 @@ class ExampleScrollPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      color: Theme.of(context).colorScheme.surface,
       child: CustomScrollView(
         key: storageKey,
         slivers: [
-          CupertinoSliverNavigationBar(
-            largeTitle: Text(title),
+          SliverAppBar.large(
+            title: Text(title),
             automaticallyImplyLeading: false,
-            transitionBetweenRoutes: false,
-            border: null,
           ),
           ...slivers,
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -58,7 +56,7 @@ class ExampleFixedPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top;
     return ColoredBox(
-      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -66,12 +64,66 @@ class ExampleFixedPage extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(20, top + 12, 20, 8),
             child: Text(
               title,
-              style: CupertinoTheme.of(context)
-                  .textTheme
-                  .navLargeTitleTextStyle,
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
           ),
           Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+/// Titled group of rows, a Material stand-in for an inset grouped list.
+class ExampleSection extends StatelessWidget {
+  /// Creates a section of [children] with an optional [header] and [footer].
+  const ExampleSection({
+    super.key,
+    this.header,
+    this.footer,
+    required this.children,
+  });
+
+  /// Label above the rows.
+  final Widget? header;
+
+  /// Note below the rows.
+  final Widget? footer;
+
+  /// Rows, usually [ListTile]s.
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (header != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: DefaultTextStyle(
+                style: theme.textTheme.titleSmall!.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+                child: header!,
+              ),
+            ),
+          Card(
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: Column(children: children),
+          ),
+          if (footer != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: DefaultTextStyle(
+                style: theme.textTheme.bodySmall!,
+                child: footer!,
+              ),
+            ),
         ],
       ),
     );

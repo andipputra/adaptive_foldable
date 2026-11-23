@@ -1,3 +1,4 @@
+import 'package:adaptive_foldable/src/fold_kit/fold_pane_modal.dart';
 import 'package:adaptive_foldable/src/layout/two_pane_layout.dart';
 import 'package:adaptive_foldable/src/scaffold/actions/nav_pane_scope.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
@@ -63,6 +64,12 @@ class FoldAwareTwoPane extends StatefulWidget {
 class _FoldAwareTwoPaneState extends State<FoldAwareTwoPane> {
   final GlobalKey _startKey = GlobalKey(debugLabel: 'FoldAwareTwoPane.start');
   final GlobalKey _endKey = GlobalKey(debugLabel: 'FoldAwareTwoPane.end');
+  final GlobalKey<OverlayState> _startOverlay = GlobalKey<OverlayState>(
+    debugLabel: 'FoldAwareTwoPane.startOverlay',
+  );
+  final GlobalKey<OverlayState> _endOverlay = GlobalKey<OverlayState>(
+    debugLabel: 'FoldAwareTwoPane.endOverlay',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -102,53 +109,63 @@ class _FoldAwareTwoPaneState extends State<FoldAwareTwoPane> {
             ? (totalW - dims.endRect.right)
             : dims.endRect.left;
 
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            // Start Pane
-            Positioned(
-              key: _startKey,
-              left: startVisible ? startLeft : 0,
-              top: 0,
-              width: startVisible ? dims.startRect.width : totalW,
-              height: totalH,
-              child: Offstage(
-                offstage: !startVisible,
-                child: TickerMode(
-                  enabled: startVisible,
-                  child: FocusTraversalGroup(
-                    child: NavPaneScope(
-                      paneId: NavPaneScope.startPane,
-                      isPrimary: true,
-                      child: widget.start,
+        return FoldPaneOverlays(
+          start: _startOverlay,
+          end: _endOverlay,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Start Pane
+              Positioned(
+                key: _startKey,
+                left: startVisible ? startLeft : 0,
+                top: 0,
+                width: startVisible ? dims.startRect.width : totalW,
+                height: totalH,
+                child: Offstage(
+                  offstage: !startVisible,
+                  child: TickerMode(
+                    enabled: startVisible,
+                    child: FocusTraversalGroup(
+                      child: NavPaneScope(
+                        paneId: NavPaneScope.startPane,
+                        isPrimary: true,
+                        child: FoldPaneOverlayHost(
+                          overlayKey: _startOverlay,
+                          child: widget.start,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // End Pane
-            Positioned(
-              key: _endKey,
-              left: endVisible ? endLeft : 0,
-              top: 0,
-              width: endVisible ? dims.endRect.width : totalW,
-              height: totalH,
-              child: Offstage(
-                offstage: !endVisible,
-                child: TickerMode(
-                  enabled: endVisible,
-                  child: FocusTraversalGroup(
-                    child: NavPaneScope(
-                      paneId: NavPaneScope.endPane,
-                      isPrimary: false,
-                      child: widget.end,
+              // End Pane
+              Positioned(
+                key: _endKey,
+                left: endVisible ? endLeft : 0,
+                top: 0,
+                width: endVisible ? dims.endRect.width : totalW,
+                height: totalH,
+                child: Offstage(
+                  offstage: !endVisible,
+                  child: TickerMode(
+                    enabled: endVisible,
+                    child: FocusTraversalGroup(
+                      child: NavPaneScope(
+                        paneId: NavPaneScope.endPane,
+                        isPrimary: false,
+                        child: FoldPaneOverlayHost(
+                          overlayKey: _endOverlay,
+                          child: widget.end,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
