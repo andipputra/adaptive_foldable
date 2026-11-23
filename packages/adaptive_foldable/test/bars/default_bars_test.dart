@@ -39,6 +39,7 @@ Future<int?> _pump(
           child: FoldSignalsScope(override: signals, child: child!),
         ),
         home: AdaptiveNavScaffold(
+          sideBarThickness: 80,
           destinations: _dests,
           selectedIndex: 1,
           onSelected: onSelected ?? (_) {},
@@ -295,6 +296,7 @@ void main() {
             child: FoldSignalsScope(override: s, child: child!),
           ),
           home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},

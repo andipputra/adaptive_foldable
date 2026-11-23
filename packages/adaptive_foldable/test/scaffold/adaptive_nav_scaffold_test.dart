@@ -31,6 +31,7 @@ class _HostState extends State<_Host> {
       builder: (context, child) =>
           FoldSignalsScope(override: widget.signals, child: child!),
       home: AdaptiveNavScaffold(
+        sideBarThickness: 80,
         destinations: _dests,
         selectedIndex: index,
         onSelected: (i) => setState(() => index = i),
@@ -185,6 +186,7 @@ void main() {
   testWidgets('asserts on out-of-range selectedIndex', (tester) async {
     expect(
       () => AdaptiveNavScaffold(
+        sideBarThickness: 80,
         destinations: _dests,
         selectedIndex: 2,
         onSelected: (_) {},
@@ -206,6 +208,7 @@ void main() {
         home: FoldSignalsScope(
           override: signals,
           child: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
