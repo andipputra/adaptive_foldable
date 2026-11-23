@@ -72,7 +72,11 @@ class TwoPaneScreen extends StatefulWidget {
 
 class _TwoPaneScreenState extends State<TwoPaneScreen> {
   int _selectedIndex = 0;
-  TwoPanePriority _priority = TwoPanePriority.both;
+
+  // Starts list-only; selecting an item switches to both panes when they fit.
+  TwoPanePriority _priority = TwoPanePriority.start;
+  bool _selected = false;
+  bool _fits = true;
 
   @override
   Widget build(BuildContext context) {
@@ -80,10 +84,23 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
 
     return ColoredBox(
       color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-      child: FoldAwareTwoPane(
-        priority: _priority,
-        start: _buildListPane(context),
-        end: _buildDetailPane(context, selectedDoc),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Mirrors FoldAwareTwoPane's default minimums (280 + 320).
+          _fits = constraints.maxWidth >= 600;
+          // Before a selection show the list only; afterwards show both panes,
+          // or the detail alone when they do not fit.
+          final priority = !_selected
+              ? TwoPanePriority.start
+              : _fits
+              ? TwoPanePriority.both
+              : _priority;
+          return FoldAwareTwoPane(
+            priority: priority,
+            start: _buildListPane(context),
+            end: _buildDetailPane(context, selectedDoc),
+          );
+        },
       ),
     );
   }
@@ -124,6 +141,7 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
                         trailing: const CupertinoListTileChevron(),
                         onTap: () => setState(() {
                           _selectedIndex = i;
+                          _selected = true;
                           _priority = TwoPanePriority.end;
                         }),
                       ),
@@ -169,8 +187,10 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
             leading: CupertinoButton(
               padding: EdgeInsets.zero,
               minimumSize: const Size.square(44),
-              onPressed: () =>
-                  setState(() => _priority = TwoPanePriority.start),
+              onPressed: () => setState(() {
+                _priority = TwoPanePriority.start;
+                _selected = false;
+              }),
               child: const Icon(
                 CupertinoIcons.back,
                 semanticLabel: 'Back to documents',
