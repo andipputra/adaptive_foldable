@@ -29,8 +29,18 @@ final class NativeNavColumnView: NSObject, FlutterPlatformView {
       bottom.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
       top.bottomAnchor.constraint(lessThanOrEqualTo: bottom.topAnchor, constant: -12),
     ])
+    channel.setMethodCallHandler { [weak self] call, result in
+      if call.method == "update", let args = call.arguments as? [String: Any] {
+        self?.apply(args)
+        result(nil)
+      } else {
+        result(FlutterMethodNotImplemented)
+      }
+    }
     if let params = params { apply(params) }
   }
+
+  deinit { channel.setMethodCallHandler(nil) }
 
   func view() -> UIView { container }
 
@@ -92,6 +102,7 @@ final class NativeNavColumnView: NSObject, FlutterPlatformView {
     let button = UIButton(configuration: config)
     button.isEnabled = item["enabled"] as? Bool ?? true
     button.accessibilityLabel = item["label"] as? String
+    button.accessibilityValue = item["badgeLabel"] as? String
     button.accessibilityTraits = selected ? [.button, .selected] : .button
     button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([

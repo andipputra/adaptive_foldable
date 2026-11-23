@@ -45,6 +45,7 @@ class _NativeIosNavBarState extends State<NativeIosNavBar> {
   MethodChannel? _channel;
   NativeIconPngs _icons = const {};
   Object? _iconsKey;
+  bool _loadingIcons = false;
 
   bool get _vertical => widget.layout.placement.isVertical;
 
@@ -57,8 +58,14 @@ class _NativeIosNavBarState extends State<NativeIosNavBar> {
   @override
   void didUpdateWidget(NativeIosNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.layout.placement.isVertical != _vertical) {
+      // The platform view is recreated for the new axis; the old channel is dead.
+      _channel?.setMethodCallHandler(null);
+      _channel = null;
+    }
     unawaited(_loadIcons());
-    _push();
+    // A pending icon load pushes once it finishes, so items never flash blank.
+    if (!_loadingIcons) _push();
   }
 
   @override
@@ -82,15 +89,18 @@ class _NativeIosNavBarState extends State<NativeIosNavBar> {
     final key = Object.hashAllUnordered(needed);
     if (key == _iconsKey) return;
     _iconsKey = key;
+    _loadingIcons = true;
     final icons = <IconData, List<int>>{
       for (final icon in needed) icon: await renderIconPng(icon),
     };
     if (!mounted || key != _iconsKey) return;
+    _loadingIcons = false;
     setState(() => _icons = icons);
     _push();
   }
 
   void _onCreated(int id) {
+    _channel?.setMethodCallHandler(null);
     _channel = MethodChannel('$kNativeBarViewType/$id')
       ..setMethodCallHandler((call) async {
         final layout = widget.layout;
@@ -124,6 +134,7 @@ class _NativeIosNavBarState extends State<NativeIosNavBar> {
     final native = Semantics(
       container: true,
       child: UiKitView(
+        key: ValueKey(_vertical),
         viewType: kNativeBarViewType,
         creationParams: _params,
         creationParamsCodec: const StandardMessageCodec(),

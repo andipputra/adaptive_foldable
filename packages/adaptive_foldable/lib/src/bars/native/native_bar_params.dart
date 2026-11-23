@@ -1,5 +1,6 @@
 import 'dart:ui' show Rect;
 
+import 'package:adaptive_foldable/src/bars/bar_strings.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/nav_destination.dart';
 import 'package:adaptive_foldable/src/model/nav_layout.dart';
@@ -40,6 +41,7 @@ Map<String, Object?> buildNativeBarParams({
         'icon': icons[d.icon],
         'selectedIcon': d.selectedIcon == null ? null : icons[d.selectedIcon],
         'badge': d.badgeCount,
+        'badgeLabel': _badgeLabel(d.badgeCount),
       },
   ],
 };
@@ -62,6 +64,7 @@ Map<String, Object?> buildNativeColumnParams(
     'enabled': a.enabled,
     'destructive': a.isDestructive,
     'badge': a.badgeCount,
+    'badgeLabel': _badgeLabel(a.badgeCount),
   };
   Map<String, Object?> fixed(String id, String label, String symbol) => {
     'id': id,
@@ -79,7 +82,7 @@ Map<String, Object?> buildNativeColumnParams(
       if (layout.showBack)
         {
           'role': 'actions',
-          'items': [fixed('back', 'Back', 'chevron.backward')],
+          'items': [fixed('back', BarStrings.back, 'chevron.backward')],
         },
       if (layout.prominentAction != null)
         {
@@ -97,7 +100,7 @@ Map<String, Object?> buildNativeColumnParams(
       if (layout.onOverflow != null)
         {
           'role': 'actions',
-          'items': [fixed('overflow', 'More', 'ellipsis')],
+          'items': [fixed('overflow', BarStrings.overflow, 'ellipsis')],
         },
       if (count > 0)
         {
@@ -116,6 +119,7 @@ Map<String, Object?> buildNativeColumnParams(
                 'enabled': true,
                 'destructive': false,
                 'badge': layout.destinations[i].badgeCount,
+                'badgeLabel': _badgeLabel(layout.destinations[i].badgeCount),
               },
           ],
         },
@@ -150,3 +154,6 @@ VoidCallback? resolveNativeTap(
   }
   return null;
 }
+
+String? _badgeLabel(int? count) =>
+    count == null || count <= 0 ? null : BarStrings.badge(count);

@@ -21,14 +21,6 @@ final class NativeNavBarFactory: NSObject, FlutterPlatformViewFactory {
         binaryMessenger: messenger
       )
       let column = NativeNavColumnView(frame: frame, channel: channel, params: params)
-      channel.setMethodCallHandler { call, result in
-        if call.method == "update", let args = call.arguments as? [String: Any] {
-          column.apply(args)
-          result(nil)
-        } else {
-          result(FlutterMethodNotImplemented)
-        }
-      }
       return column
     }
     return NativeNavBarView(frame: frame, viewId: viewId, messenger: messenger, params: params)
@@ -70,6 +62,8 @@ final class NativeNavBarView: NSObject, FlutterPlatformView, UITabBarDelegate {
   }
 
   func view() -> UIView { container }
+
+  deinit { channel.setMethodCallHandler(nil) }
 
   private func image(_ item: [String: Any], key: String, scale: CGFloat) -> UIImage? {
     if let symbol = item["sfSymbol"] as? String {
