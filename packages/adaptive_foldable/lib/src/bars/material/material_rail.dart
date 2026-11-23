@@ -20,23 +20,29 @@ class MaterialRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final railLayout = layout.copyWith(visibleActions: const []);
+    final style = layout.barStyle;
+    final items = buildNavBarItems(railLayout, colors, tabsExpand: false);
     return ColoredBox(
       color: colors.background,
       child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            for (final item in buildNavBarItems(
-              railLayout,
-              colors,
-              tabsExpand: false,
-            ))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: item,
-              ),
-          ],
+        child: Padding(
+          padding: paddingFor(style, const EdgeInsets.only(top: 8)),
+          child: Column(
+            mainAxisAlignment: mainAxisFor(style.alignment),
+            children: spaceItems(
+              [
+                for (final item in items)
+                  Padding(
+                    padding: style.itemSpacing == null
+                        ? const EdgeInsets.symmetric(vertical: 4)
+                        : EdgeInsets.zero,
+                    child: item,
+                  ),
+              ],
+              style.itemSpacing,
+              Axis.vertical,
+            ),
+          ),
         ),
       ),
     );

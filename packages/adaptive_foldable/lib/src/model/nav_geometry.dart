@@ -11,6 +11,8 @@ class NavGeometry {
     this.skipRegion,
     this.homeIndicatorGap = 0,
     this.foldClearance = 0,
+    this.topBarRect,
+    this.topBarInset = 0,
   });
 
   /// Rectangle of the bar or column in view coordinates.
@@ -28,6 +30,12 @@ class NavGeometry {
   /// Space kept free on each side of an active fold.
   final double foldClearance;
 
+  /// Rectangle of the top action bar in view coordinates, or null when there is none.
+  final Rect? topBarRect;
+
+  /// Part of [topBarRect] at its top taken by the status bar or camera area.
+  final double topBarInset;
+
   /// Returns a copy with the given fields replaced.
   NavGeometry copyWith({
     Rect? barRect,
@@ -36,12 +44,16 @@ class NavGeometry {
     NavAxis? itemAxis,
     double? homeIndicatorGap,
     double? foldClearance,
+    Rect? topBarRect,
+    double? topBarInset,
   }) => NavGeometry(
     barRect: barRect ?? this.barRect,
     skipRegion: clearSkipRegion ? null : (skipRegion ?? this.skipRegion),
     itemAxis: itemAxis ?? this.itemAxis,
     homeIndicatorGap: homeIndicatorGap ?? this.homeIndicatorGap,
     foldClearance: foldClearance ?? this.foldClearance,
+    topBarRect: topBarRect ?? this.topBarRect,
+    topBarInset: topBarInset ?? this.topBarInset,
   );
 
   @override
@@ -51,7 +63,9 @@ class NavGeometry {
       other.skipRegion == skipRegion &&
       other.itemAxis == itemAxis &&
       other.homeIndicatorGap == homeIndicatorGap &&
-      other.foldClearance == foldClearance;
+      other.foldClearance == foldClearance &&
+      other.topBarRect == topBarRect &&
+      other.topBarInset == topBarInset;
 
   @override
   int get hashCode => Object.hash(
@@ -60,5 +74,7 @@ class NavGeometry {
     itemAxis,
     homeIndicatorGap,
     foldClearance,
+    topBarRect,
+    topBarInset,
   );
 }

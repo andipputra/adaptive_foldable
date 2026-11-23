@@ -23,6 +23,9 @@ const double kSideBarThickness = 0;
 /// Extra side-column width in dp per 1.0 of text scale above 1.0, so scaled labels fit.
 const double kSideBarThicknessPerTextScale = 24;
 
+/// Content height in dp of the top action bar, excluding the status-bar inset.
+const double kTopBarHeight = 52;
+
 /// Space in dp kept between the bar and an active fold it was cut away from.
 const double kFoldClearance = 4;
 
@@ -39,6 +42,12 @@ const double kFoldClearance = 4;
 ///   ending above a camera region at the bottom or the home-indicator gap.
 /// - Logical edges resolve through [direction]; physical edges do not flip.
 /// - [sideThickness] overrides [kSideBarThickness] for the side column.
+/// - [bottomThickness] overrides [kBottomBarThickness] for the bottom bar.
+/// - [topBarHeight], when non-null, adds [NavGeometry.topBarRect]: a bar across
+///   the top of the free width (beside a side column), that tall plus the
+///   status-bar inset unless [topBarSafeArea] is false. It is cut around an
+///   active fold the same way as the bar.
+/// - [bottomSafeArea] false drops the home-indicator gap.
 /// - [textScale] grows the bottom bar and the side column so scaled labels fit.
 /// - The result never intersects an active fold: the bar is cut to its largest
 ///   remaining piece, [kFoldClearance] away from the fold, and
@@ -50,9 +59,13 @@ NavGeometry resolveGeometry({
   TextDirection direction = TextDirection.ltr,
   double textScale = 1,
   double sideThickness = kSideBarThickness,
+  double bottomThickness = kBottomBarThickness,
+  double? topBarHeight,
+  bool topBarSafeArea = true,
+  bool bottomSafeArea = true,
 }) {
   final size = signals.viewSize;
-  final gap = viewPadding.bottom;
+  final gap = bottomSafeArea ? viewPadding.bottom : 0.0;
   final isVertical = placement.isVertical;
 
   late Rect bar;
@@ -62,7 +75,7 @@ NavGeometry resolveGeometry({
       kSideBarThicknessPerTextScale * (math.max(1, textScale) - 1);
   if (!isVertical) {
     final thickness =
-        kBottomBarThickness +
+        bottomThickness +
         kBottomBarThicknessPerTextScale * (math.max(1, textScale) - 1);
     bar = Rect.fromLTRB(
       math.min(viewPadding.left, size.width),
@@ -114,7 +127,35 @@ NavGeometry resolveGeometry({
       ? Rect.fromLTRB(bar.left, 0, bar.right, skipBottom)
       : null;
 
+  Rect? topBar;
+  var topInset = 0.0;
+  if (topBarHeight != null) {
+    topInset = topBarSafeArea ? viewPadding.top : 0.0;
+    final onLeft = isVertical && placement.isOnLeft(direction);
+    final onRight = isVertical && !onLeft;
+    var top = Rect.fromLTRB(
+      onLeft ? math.min(size.width, math.max(bar.right, viewPadding.left)) : 0,
+      0,
+      onRight ? math.max(0, bar.left) : size.width,
+      math.min(size.height, topInset + topBarHeight),
+    );
+    for (final fold in signals.activeFolds) {
+      final keepOut = fold.inflate(kFoldClearance);
+      if (top.overlaps(keepOut)) {
+        final parts = _piecesOutside(top, keepOut);
+        top = parts.isEmpty
+            ? Rect.fromLTWH(top.left, top.top, 0, 0)
+            : parts.reduce(
+                (a, b) => a.width * a.height >= b.width * b.height ? a : b,
+              );
+      }
+    }
+    topBar = top;
+  }
+
   return NavGeometry(
+    topBarRect: topBar,
+    topBarInset: topInset,
     barRect: bar,
     skipRegion: skip,
     itemAxis: isVertical ? NavAxis.vertical : NavAxis.horizontal,

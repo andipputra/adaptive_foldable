@@ -23,10 +23,11 @@ class CupertinoStyleNavBar extends StatelessWidget {
 
   Widget _build(BuildContext context) {
     final colors = this.colors ?? defaultColors(context);
+    final style = layout.barStyle;
     final items = buildNavBarItems(
       layout,
       colors,
-      tabsExpand: !layout.placement.isVertical,
+      tabsExpand: !layout.placement.isVertical && style.alignment == null,
     );
     final border = colors.border ?? const Color(0x00000000);
     if (layout.placement.isVertical) {
@@ -44,14 +45,22 @@ class CupertinoStyleNavBar extends StatelessWidget {
           ),
         ),
         child: SingleChildScrollView(
+          padding: paddingFor(style, EdgeInsets.zero),
           child: Column(
-            children: [
-              for (final item in items)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: item,
-                ),
-            ],
+            mainAxisAlignment: mainAxisFor(style.alignment),
+            children: spaceItems(
+              [
+                for (final item in items)
+                  Padding(
+                    padding: style.itemSpacing == null
+                        ? const EdgeInsets.symmetric(vertical: 4)
+                        : EdgeInsets.zero,
+                    child: item,
+                  ),
+              ],
+              style.itemSpacing,
+              Axis.vertical,
+            ),
           ),
         ),
       );
@@ -63,7 +72,13 @@ class CupertinoStyleNavBar extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.only(bottom: layout.geometry.homeIndicatorGap),
-        child: Row(children: items),
+        child: Padding(
+          padding: paddingFor(style, EdgeInsets.zero),
+          child: Row(
+            mainAxisAlignment: mainAxisFor(style.alignment),
+            children: spaceItems(items, style.itemSpacing, Axis.horizontal),
+          ),
+        ),
       ),
     );
   }

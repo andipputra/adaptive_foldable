@@ -30,6 +30,7 @@ Future<void> _pump(
         child: FoldSignalsScope(override: signals, child: child!),
       ),
       home: AdaptiveNavScaffold(
+        sideBarThickness: 80,
         destinations: _dests,
         selectedIndex: 0,
         onSelected: (_) {},
@@ -236,7 +237,7 @@ void main() {
       await tester.pump();
       final extended = tester.getRect(find.byKey(const Key('body')));
       expect(extended.left, 0);
-      expect(find.textContaining('40.0'), findsOneWidget);
+      expect(find.textContaining('80.0'), findsOneWidget);
     });
 
     testWidgets('bottom bar is unaffected', (tester) async {
@@ -339,6 +340,7 @@ void main() {
         MaterialApp(
           builder: (c, child) => FoldSignalsScope(override: s, child: child!),
           home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
@@ -381,6 +383,7 @@ void main() {
         MaterialApp(
           builder: (c, child) => FoldSignalsScope(override: s, child: child!),
           home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
@@ -411,6 +414,7 @@ void main() {
         MaterialApp(
           builder: (c, child) => FoldSignalsScope(override: s, child: child!),
           home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},

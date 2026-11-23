@@ -68,6 +68,8 @@ class _MyAppState extends State<MyApp> {
             ),
           ],
           barBuilder: _native ? nativeIosBarBuilder : null,
+          actionsAtTop: true,
+          sideBarThickness: _native ? 0 : 80,
           selectedIndex: shell.currentIndex,
           onSelected: shell.goBranch,
           debugOverlay: false,

@@ -7,6 +7,7 @@ export 'package:adaptive_foldable/src/bars/material/material_nav_bar.dart'
     show MaterialNavBar, materialBarBuilder;
 export 'package:adaptive_foldable/src/bars/native/native_ios_nav_bar.dart'
     show NativeIosNavBar, nativeIosBarBuilder;
+export 'package:adaptive_foldable/src/bars/nav_top_bar.dart' show NavTopBar;
 export 'package:adaptive_foldable/src/debug/debug_report.dart'
     show formatSignalsReport;
 export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
@@ -30,6 +31,7 @@ export 'package:adaptive_foldable/src/model/nav_action.dart';
 export 'package:adaptive_foldable/src/model/nav_action_group.dart';
 export 'package:adaptive_foldable/src/model/nav_action_placement.dart';
 export 'package:adaptive_foldable/src/model/nav_axis.dart';
+export 'package:adaptive_foldable/src/model/nav_bar_style.dart';
 export 'package:adaptive_foldable/src/model/nav_compression.dart';
 export 'package:adaptive_foldable/src/model/nav_destination.dart';
 export 'package:adaptive_foldable/src/model/nav_geometry.dart';

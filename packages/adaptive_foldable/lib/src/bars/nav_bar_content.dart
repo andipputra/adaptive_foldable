@@ -1,6 +1,7 @@
 import 'package:adaptive_foldable/src/bars/bar_strings.dart';
 import 'package:adaptive_foldable/src/bars/nav_bar_item.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
+import 'package:adaptive_foldable/src/model/nav_bar_style.dart';
 import 'package:adaptive_foldable/src/model/nav_layout.dart';
 import 'package:flutter/semantics.dart' show OrdinalSortKey;
 import 'package:flutter/widgets.dart';
@@ -170,4 +171,34 @@ class NavBarOverflowItem extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Maps [alignment] to a main-axis alignment; null means [fallback].
+MainAxisAlignment mainAxisFor(
+  NavBarAlignment? alignment, {
+  MainAxisAlignment fallback = MainAxisAlignment.start,
+}) => switch (alignment) {
+  NavBarAlignment.start => MainAxisAlignment.start,
+  NavBarAlignment.center => MainAxisAlignment.center,
+  NavBarAlignment.end => MainAxisAlignment.end,
+  null => fallback,
+};
+
+/// Inserts [spacing] dp of room between [items] along [axis]; returns [items] when [spacing] is null or 0.
+List<Widget> spaceItems(List<Widget> items, double? spacing, Axis axis) {
+  if (spacing == null || spacing <= 0 || items.length < 2) return items;
+  final gap = axis == Axis.horizontal
+      ? SizedBox(width: spacing)
+      : SizedBox(height: spacing);
+  return [
+    for (var i = 0; i < items.length; i++) ...[if (i > 0) gap, items[i]],
+  ];
+}
+
+/// Padding of [style] as [EdgeInsets], or [fallback] when the style sets none.
+EdgeInsets paddingFor(NavBarStyle style, EdgeInsets fallback) {
+  final p = style.padding;
+  return p == null
+      ? fallback
+      : EdgeInsets.fromLTRB(p.left, p.top, p.right, p.bottom);
 }
