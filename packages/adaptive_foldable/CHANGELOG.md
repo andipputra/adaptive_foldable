@@ -1,3 +1,7 @@
+## Unreleased
+
+* Added opt-in `nativeIosBarBuilder` (native iOS `UITabBar` for bottom placement) and `NavDestination.sfSymbol`.
+
 ## 1.0.1
 
 * **Fold Kit**:

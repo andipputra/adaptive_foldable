@@ -6,6 +6,9 @@ import 'package:adaptive_foldable_example/screens/two_pane_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// Run with `--dart-define=NATIVE_BAR=true` to use the native iOS tab bar.
+const bool _nativeBar = bool.fromEnvironment('NATIVE_BAR');
+
 void main() {
   runApp(const MyApp());
 }
@@ -30,15 +33,30 @@ class _MyAppState extends State<MyApp> {
               icon: Icons.inbox_outlined,
               label: 'Inbox',
               badgeCount: 7,
+              sfSymbol: 'tray',
             ),
             NavDestination(
               icon: Icons.view_sidebar_outlined,
               label: 'Two-Pane',
+              sfSymbol: 'sidebar.right',
             ),
-            NavDestination(icon: Icons.grid_view_outlined, label: 'Grid'),
-            NavDestination(icon: Icons.layers_outlined, label: 'Modals'),
-            NavDestination(icon: Icons.person_outline, label: 'Profile'),
+            NavDestination(
+              icon: Icons.grid_view_outlined,
+              label: 'Grid',
+              sfSymbol: 'square.grid.2x2',
+            ),
+            NavDestination(
+              icon: Icons.layers_outlined,
+              label: 'Modals',
+              sfSymbol: 'square.3.layers.3d',
+            ),
+            NavDestination(
+              icon: Icons.person_outline,
+              label: 'Profile',
+              sfSymbol: 'person',
+            ),
           ],
+          barBuilder: _nativeBar ? nativeIosBarBuilder : null,
           selectedIndex: shell.currentIndex,
           onSelected: shell.goBranch,
           debugOverlay: true,
