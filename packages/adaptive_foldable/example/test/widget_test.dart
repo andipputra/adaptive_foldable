@@ -46,8 +46,8 @@ void main() {
     await tester.tap(find.text('Modals').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Fold-Aware Dialogs'), findsOneWidget);
-    expect(find.text('Open Dialog (Auto Anchor)'), findsOneWidget);
-    expect(find.text('Open Bottom Sheet (Auto Anchor)'), findsOneWidget);
+    expect(find.text('Fold-aware dialogs'), findsOneWidget);
+    expect(find.text('Dialog: Auto anchor'), findsOneWidget);
+    expect(find.text('Sheet: Auto anchor'), findsOneWidget);
   });
 }

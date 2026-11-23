@@ -1,6 +1,6 @@
-// ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
+// ignore_for_file: deprecated_member_use -- cupertino.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 /// Item data model for the two-pane example.
 class DocumentItem {
@@ -78,8 +78,9 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
   Widget build(BuildContext context) {
     final selectedDoc = sampleDocuments[_selectedIndex];
 
-    return Scaffold(
-      body: FoldAwareTwoPane(
+    return ColoredBox(
+      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+      child: FoldAwareTwoPane(
         priority: _priority,
         start: _buildListPane(context),
         end: _buildDetailPane(context, selectedDoc),
@@ -91,42 +92,44 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
     return AdaptiveNavActions(
       groups: [
         NavActionGroup([
-          NavAction(icon: Icons.filter_list, label: 'Filter', onPressed: () {}),
+          NavAction(
+            icon: CupertinoIcons.line_horizontal_3_decrease,
+            sfSymbol: 'line.3.horizontal.decrease',
+            label: 'Filter',
+            onPressed: () {},
+          ),
         ]),
       ],
       child: Column(
         children: [
           NavPaneHeaderBar(
             title: const Text('Documents'),
-            leading: const Icon(Icons.folder_outlined),
+            leading: const Icon(CupertinoIcons.folder),
           ),
           Expanded(
-            child: ListView.separated(
+            child: ListView(
               key: const PageStorageKey('two_pane_list'),
-              itemCount: sampleDocuments.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final doc = sampleDocuments[index];
-                final isSelected = index == _selectedIndex;
-                return ListTile(
-                  selected: isSelected,
-                  title: Text(
-                    doc.title,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  subtitle: Text(doc.date),
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = index;
-                      _priority = TwoPanePriority.end;
-                    });
-                  },
-                );
-              },
+              children: [
+                CupertinoListSection.insetGrouped(
+                  children: [
+                    for (var i = 0; i < sampleDocuments.length; i++)
+                      CupertinoListTile.notched(
+                        backgroundColor: i == _selectedIndex
+                            ? CupertinoColors.systemBlue
+                                  .resolveFrom(context)
+                                  .withValues(alpha: 0.12)
+                            : null,
+                        title: Text(sampleDocuments[i].title),
+                        subtitle: Text(sampleDocuments[i].date),
+                        trailing: const CupertinoListTileChevron(),
+                        onTap: () => setState(() {
+                          _selectedIndex = i;
+                          _priority = TwoPanePriority.end;
+                        }),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -137,19 +140,22 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
   Widget _buildDetailPane(BuildContext context, DocumentItem doc) {
     return AdaptiveNavActions(
       prominentAction: NavAction(
-        icon: Icons.edit_outlined,
+        icon: CupertinoIcons.pencil,
+        sfSymbol: 'pencil',
         label: 'Edit',
         onPressed: () {},
       ),
       groups: [
         NavActionGroup([
           NavAction(
-            icon: Icons.share_outlined,
+            icon: CupertinoIcons.share,
+            sfSymbol: 'square.and.arrow.up',
             label: 'Share',
             onPressed: () {},
           ),
           NavAction(
-            icon: Icons.archive_outlined,
+            icon: CupertinoIcons.archivebox,
+            sfSymbol: 'archivebox',
             label: 'Archive',
             onPressed: () {},
           ),
@@ -160,14 +166,15 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
         children: [
           NavPaneHeaderBar(
             title: Text(doc.title),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              tooltip: 'Back to documents',
-              onPressed: () {
-                setState(() {
-                  _priority = TwoPanePriority.start;
-                });
-              },
+            leading: CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size.square(44),
+              onPressed: () =>
+                  setState(() => _priority = TwoPanePriority.start),
+              child: const Icon(
+                CupertinoIcons.back,
+                semanticLabel: 'Back to documents',
+              ),
             ),
           ),
           Expanded(
@@ -178,22 +185,23 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
                 children: [
                   Text(
                     doc.title,
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: CupertinoTheme.of(context)
+                        .textTheme
+                        .navLargeTitleTextStyle,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Updated ${doc.date}',
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: Colors.grey.shade600),
+                    style: CupertinoTheme.of(context)
+                        .textTheme
+                        .tabLabelTextStyle,
                   ),
                   const SizedBox(height: 16),
-                  const Divider(),
                   const SizedBox(height: 16),
                   Text(
                     doc.content,
-                    style: Theme.of(context).textTheme.bodyLarge
-                        ?.copyWith(height: 1.5),
+                    style: CupertinoTheme.of(context).textTheme.textStyle
+                        .copyWith(height: 1.4),
                   ),
                 ],
               ),
