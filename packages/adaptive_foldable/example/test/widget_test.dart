@@ -4,8 +4,19 @@ import 'package:adaptive_foldable_example/main.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('Start page offers native and default bars', (tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+    expect(find.text('Native'), findsOneWidget);
+    await tester.tap(find.text('Native'));
+    await tester.pumpAndSettle();
+    expect(find.text('Message 0'), findsOneWidget);
+  });
+
   testWidgets('Verify example app renders the inbox with tabs', (tester) async {
     await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Default'));
     await tester.pumpAndSettle();
     expect(find.text('Message 0'), findsOneWidget);
     expect(find.text('Two-Pane'), findsWidgets);
@@ -16,6 +27,8 @@ void main() {
 
   testWidgets('Navigate to Two-Pane tab displays documents', (tester) async {
     await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Default'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Two-Pane').last);
@@ -29,6 +42,8 @@ void main() {
   testWidgets('Navigate to Grid tab displays grid items', (tester) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Default'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Grid').last);
     await tester.pumpAndSettle();
@@ -41,6 +56,8 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Default'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Modals').last);

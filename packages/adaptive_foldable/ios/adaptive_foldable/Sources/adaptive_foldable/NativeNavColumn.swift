@@ -8,6 +8,8 @@ import UIKit
 /// the column. Dart stays the source of truth; every tap is sent back by id.
 final class NativeNavColumnView: NSObject, FlutterPlatformView {
   private let container = UIView()
+  /// Width and height of each button; lowering it tightens the icon spacing (Apple's Duo sample is about 40).
+  private static let itemSize: CGFloat = 40
   private let top = UIStackView()
   private let bottom = UIStackView()
   private let channel: FlutterMethodChannel
@@ -67,8 +69,8 @@ final class NativeNavColumnView: NSObject, FlutterPlatformView {
     NSLayoutConstraint.activate([
       stack.topAnchor.constraint(equalTo: glass.contentView.topAnchor, constant: 4),
       stack.bottomAnchor.constraint(equalTo: glass.contentView.bottomAnchor, constant: -4),
-      stack.leadingAnchor.constraint(equalTo: glass.contentView.leadingAnchor, constant: 4),
-      stack.trailingAnchor.constraint(equalTo: glass.contentView.trailingAnchor, constant: -4),
+      stack.leadingAnchor.constraint(equalTo: glass.contentView.leadingAnchor),
+      stack.trailingAnchor.constraint(equalTo: glass.contentView.trailingAnchor),
     ])
     return glass
   }
@@ -97,7 +99,7 @@ final class NativeNavColumnView: NSObject, FlutterPlatformView {
     config.baseForegroundColor = destructive ? .systemRed : (selected ? .tintColor : .label)
     if selected {
       config.background.backgroundColor = UIColor.tintColor.withAlphaComponent(isTab ? 0.18 : 0.12)
-      config.background.cornerRadius = 22
+      config.background.cornerRadius = Self.itemSize / 2
     }
     let button = UIButton(configuration: config)
     button.isEnabled = item["enabled"] as? Bool ?? true
@@ -106,8 +108,8 @@ final class NativeNavColumnView: NSObject, FlutterPlatformView {
     button.accessibilityTraits = selected ? [.button, .selected] : .button
     button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      button.widthAnchor.constraint(equalToConstant: 44),
-      button.heightAnchor.constraint(equalToConstant: 44),
+      button.widthAnchor.constraint(equalToConstant: Self.itemSize),
+      button.heightAnchor.constraint(equalToConstant: Self.itemSize),
     ])
     button.addAction(
       UIAction { [weak self, weak button] _ in

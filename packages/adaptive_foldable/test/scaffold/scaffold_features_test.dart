@@ -236,7 +236,7 @@ void main() {
       await tester.pump();
       final extended = tester.getRect(find.byKey(const Key('body')));
       expect(extended.left, 0);
-      expect(find.textContaining('80.0'), findsOneWidget);
+      expect(find.textContaining('40.0'), findsOneWidget);
     });
 
     testWidgets('bottom bar is unaffected', (tester) async {

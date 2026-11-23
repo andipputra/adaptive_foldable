@@ -80,6 +80,8 @@ class AdaptiveNavScaffold extends StatefulWidget {
     this.onLayoutChanged,
     this.extendBodyBehindBar = false,
     this.onBack,
+    this.backgroundColor,
+    this.sideBarThickness = kSideBarThickness,
   }) : assert(destinations.length > 0, 'destinations must not be empty'),
        assert(
          selectedIndex >= 0 && selectedIndex < destinations.length,
@@ -128,6 +130,14 @@ class AdaptiveNavScaffold extends StatefulWidget {
 
   /// Optional callback invoked when the Back action is triggered, before fallback [Navigator.maybePop].
   final VoidCallback? onBack;
+
+  /// Paints behind the body and bar, so areas the bar reserves but does not draw match the app.
+  ///
+  /// Null paints nothing.
+  final Color? backgroundColor;
+
+  /// Width in dp of a side bar, excluding the system inset; text scale still adds to it.
+  final double sideBarThickness;
 
   @override
   State<AdaptiveNavScaffold> createState() => _AdaptiveNavScaffoldState();
@@ -346,6 +356,7 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
       ),
       direction: direction,
       textScale: media.textScaler.scale(1),
+      sideThickness: widget.sideBarThickness,
     );
     final layout = NavLayout(
       placement: placement,
@@ -427,6 +438,10 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
               key: _stackKey,
               textDirection: direction,
               children: [
+                if (widget.backgroundColor != null)
+                  Positioned.fill(
+                    child: ColoredBox(color: widget.backgroundColor!),
+                  ),
                 body!,
                 Positioned.fromRect(
                   rect: geometry.barRect,

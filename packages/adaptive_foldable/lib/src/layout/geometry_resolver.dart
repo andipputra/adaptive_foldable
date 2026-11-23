@@ -18,7 +18,7 @@ const double kBottomBarThicknessPerTextScale = 17;
 /// Thickness in dp of a side rail or column, excluding any side inset.
 ///
 /// Initial value; revisited against the simulator in ANS-M1-013.
-const double kSideBarThickness = 80;
+const double kSideBarThickness = 0;
 
 /// Extra side-column width in dp per 1.0 of text scale above 1.0, so scaled labels fit.
 const double kSideBarThicknessPerTextScale = 24;
@@ -38,6 +38,7 @@ const double kFoldClearance = 4;
 ///   below a status or camera region at the top ([NavGeometry.skipRegion]) and
 ///   ending above a camera region at the bottom or the home-indicator gap.
 /// - Logical edges resolve through [direction]; physical edges do not flip.
+/// - [sideThickness] overrides [kSideBarThickness] for the side column.
 /// - [textScale] grows the bottom bar and the side column so scaled labels fit.
 /// - The result never intersects an active fold: the bar is cut to its largest
 ///   remaining piece, [kFoldClearance] away from the fold, and
@@ -48,6 +49,7 @@ NavGeometry resolveGeometry({
   NavInsets viewPadding = NavInsets.zero,
   TextDirection direction = TextDirection.ltr,
   double textScale = 1,
+  double sideThickness = kSideBarThickness,
 }) {
   final size = signals.viewSize;
   final gap = viewPadding.bottom;
@@ -55,6 +57,9 @@ NavGeometry resolveGeometry({
 
   late Rect bar;
   var skipBottom = 0.0;
+  final scaledSide =
+      sideThickness +
+      kSideBarThicknessPerTextScale * (math.max(1, textScale) - 1);
   if (!isVertical) {
     final thickness =
         kBottomBarThickness +
@@ -67,9 +72,7 @@ NavGeometry resolveGeometry({
     );
   } else {
     final onLeft = placement.isOnLeft(direction);
-    final side =
-        kSideBarThickness +
-        kSideBarThicknessPerTextScale * (math.max(1, textScale) - 1);
+    final side = scaledSide;
     final span = _freeSpan(signals, viewPadding, onLeft, size, side);
     final top = span.$1;
     skipBottom = top;

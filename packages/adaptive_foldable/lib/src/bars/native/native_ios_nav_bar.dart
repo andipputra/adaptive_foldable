@@ -5,6 +5,7 @@ import 'package:adaptive_foldable/src/bars/native/icon_png.dart';
 import 'package:adaptive_foldable/src/bars/native/native_bar_params.dart';
 import 'package:adaptive_foldable/src/bars/nav_bar_content.dart';
 import 'package:adaptive_foldable/src/model/nav_layout.dart';
+import 'package:adaptive_foldable/src/signals/fold_signals.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart' show PlatformViewHitTestBehavior;
 import 'package:flutter/services.dart';
@@ -143,11 +144,30 @@ class _NativeIosNavBarState extends State<NativeIosNavBar> {
       ),
     );
     if (_vertical) {
-      return ColoredBox(
-        color: MediaQuery.platformBrightnessOf(context) == Brightness.dark
-            ? const Color(0xFF000000)
-            : const Color(0xFFFFFFFF),
-        child: native,
+      // No fill: the glass capsules float over the page like the system column.
+      final bar = widget.layout.geometry.barRect;
+      final signals = FoldSignals.of(context);
+      // Centre the capsules under the camera / status cluster above the column.
+      var shift = 0.0;
+      for (final o in signals.occlusions) {
+        if (o.center.dy < signals.viewSize.height / 2 &&
+            o.left < bar.right &&
+            o.right > bar.left) {
+          shift = o.center.dx - bar.center.dx;
+          break;
+        }
+      }
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: shift,
+            top: 0,
+            width: bar.width,
+            height: bar.height,
+            child: native,
+          ),
+        ],
       );
     }
     final leading = buildNavBarItems(

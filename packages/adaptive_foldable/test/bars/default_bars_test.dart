@@ -91,7 +91,8 @@ void main() {
                 )
                 .first,
           );
-          expect(box.width, greaterThanOrEqualTo(44));
+          // Side column is kSideBarThickness (40) wide; height keeps the 44 pt target.
+          expect(box.width, greaterThanOrEqualTo(40));
           expect(box.height, greaterThanOrEqualTo(44));
         }
       });

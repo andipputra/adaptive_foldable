@@ -7,9 +7,6 @@ import 'package:adaptive_foldable_example/widgets/example_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
-/// Run with `--dart-define=NATIVE_BAR=true` to use the native iOS tab bar.
-const bool _nativeBar = bool.fromEnvironment('NATIVE_BAR');
-
 void main() {
   runApp(const MyApp());
 }
@@ -24,9 +21,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  /// Chosen on the start page; read by the shell when it builds the bar.
+  bool _native = false;
+
   late final GoRouter _router = GoRouter(
-    initialLocation: '/inbox',
+    initialLocation: '/',
     routes: [
+      GoRoute(
+        path: '/',
+        builder: (_, _) => StartPage(
+          onSelected: (native) {
+            _native = native;
+            _router.go('/inbox');
+          },
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AdaptiveNavScaffold(
           destinations: const [
@@ -58,10 +67,12 @@ class _MyAppState extends State<MyApp> {
               sfSymbol: 'person',
             ),
           ],
-          barBuilder: _nativeBar ? nativeIosBarBuilder : null,
+          barBuilder: _native ? nativeIosBarBuilder : null,
           selectedIndex: shell.currentIndex,
           onSelected: shell.goBranch,
-          debugOverlay: true,
+          debugOverlay: false,
+          backgroundColor: CupertinoTheme.of(context).scaffoldBackgroundColor,
+          extendBodyBehindBar: false,
           body: shell,
         ),
         branches: [
@@ -118,6 +129,49 @@ class _MyAppState extends State<MyApp> {
       theme: const CupertinoThemeData(primaryColor: CupertinoColors.systemBlue),
       routerConfig: _router,
       builder: (context, child) => FoldSignalsScope(child: child!),
+    );
+  }
+}
+
+/// First page: choose the native iOS bar or the package's default bar.
+class StartPage extends StatelessWidget {
+  /// Creates an instance of [StartPage]; [onSelected] receives true for the native bar.
+  const StartPage({super.key, required this.onSelected});
+
+  /// Called with true for the native bar, false for the default bar.
+  final ValueChanged<bool> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Choose navigation'),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Native uses UIKit on iOS and falls back to the Cupertino-style bar elsewhere. Default uses the package bar for the platform.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              CupertinoButton.filled(
+                onPressed: () => onSelected(true),
+                child: const Text('Native'),
+              ),
+              const SizedBox(height: 12),
+              CupertinoButton(
+                onPressed: () => onSelected(false),
+                child: const Text('Default'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
