@@ -14,7 +14,24 @@ final class NativeNavBarFactory: NSObject, FlutterPlatformViewFactory {
   }
 
   func create(withFrame frame: CGRect, viewIdentifier viewId: Int64, arguments args: Any?) -> FlutterPlatformView {
-    NativeNavBarView(frame: frame, viewId: viewId, messenger: messenger, params: args as? [String: Any])
+    let params = args as? [String: Any]
+    if params?["axis"] as? String == "vertical" {
+      let channel = FlutterMethodChannel(
+        name: "dev.adaptivefoldable/native_bar/\(viewId)",
+        binaryMessenger: messenger
+      )
+      let column = NativeNavColumnView(frame: frame, channel: channel, params: params)
+      channel.setMethodCallHandler { call, result in
+        if call.method == "update", let args = call.arguments as? [String: Any] {
+          column.apply(args)
+          result(nil)
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      }
+      return column
+    }
+    return NativeNavBarView(frame: frame, viewId: viewId, messenger: messenger, params: params)
   }
 }
 

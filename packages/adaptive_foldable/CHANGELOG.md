@@ -1,6 +1,6 @@
 ## Unreleased
 
-* Added opt-in `nativeIosBarBuilder` (native iOS `UITabBar` for bottom placement) and `NavDestination.sfSymbol`.
+* Added opt-in `nativeIosBarBuilder` (native `UITabBar` at the bottom, Liquid Glass side column on iPhone Duo) and `NavDestination.sfSymbol`.
 
 ## 1.0.1
 
