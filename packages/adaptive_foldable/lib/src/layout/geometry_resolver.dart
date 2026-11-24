@@ -118,9 +118,7 @@ NavGeometry resolveGeometry({
   if (cutAway) {
     bar = pieces.isEmpty
         ? Rect.fromLTWH(bar.left, bar.top, 0, 0)
-        : pieces.reduce(
-            (a, b) => a.width * a.height >= b.width * b.height ? a : b,
-          );
+        : _largestPiece(pieces, direction);
   }
 
   final skip = isVertical && skipBottom > 0 && !bar.isEmpty
@@ -145,9 +143,7 @@ NavGeometry resolveGeometry({
         final parts = _piecesOutside(top, keepOut);
         top = parts.isEmpty
             ? Rect.fromLTWH(top.left, top.top, 0, 0)
-            : parts.reduce(
-                (a, b) => a.width * a.height >= b.width * b.height ? a : b,
-              );
+            : _largestPiece(parts, direction);
       }
     }
     topBar = top;
@@ -190,6 +186,22 @@ NavGeometry resolveGeometry({
     }
   }
   return (math.min(top, size.height), bottom);
+}
+
+/// Returns the largest of [pieces] by area.
+///
+/// Areas within half a logical pixel count as equal, and the piece on the
+/// leading side for [direction] wins, so equal panes resolve the same way in
+/// LTR and RTL.
+Rect _largestPiece(List<Rect> pieces, TextDirection direction) {
+  final leadingFirst = direction == TextDirection.ltr
+      ? (Rect a, Rect b) => a.left <= b.left
+      : (Rect a, Rect b) => a.right >= b.right;
+  return pieces.reduce((a, b) {
+    final diff = a.width * a.height - b.width * b.height;
+    if (diff.abs() <= 0.5) return leadingFirst(a, b) ? a : b;
+    return diff > 0 ? a : b;
+  });
 }
 
 /// Returns the parts of [bar] that do not overlap [keepOut].
