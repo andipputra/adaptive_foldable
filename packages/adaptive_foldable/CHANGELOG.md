@@ -1,6 +1,8 @@
 ## Unreleased
 
 * Added `MaterialWindowSize` and `MaterialSizeClass`: Material 3 compact, medium and expanded classes for window width and height.
+* Default bars and `NavPaneHeaderBar` actions now use a 48 dp minimum tap target on Android (44 pt elsewhere).
+* Book-posture bottom bars stay on the larger pane; equal panes pick the leading side.
 * **Behaviour change (Android):** `MaterialPolicy` now keeps the bottom bar at every width and in book posture. Pass `MaterialPolicy(railOnWide: true)` to restore the previous rail from 600 dp.
 
 ## 1.0.2
