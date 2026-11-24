@@ -173,7 +173,11 @@ void main() {
     tester,
   ) async {
     final signals = FakeFoldSignals(viewSize: const Size(500, 800));
-    await _pump(tester, signals, policy: const MaterialPolicy());
+    await _pump(
+      tester,
+      signals,
+      policy: const MaterialPolicy(railOnWide: true),
+    );
     final host = tester.state<_HostState>(find.byType(_Host));
     await tester.enterText(find.byType(TextField), 'keep');
     expect(tester.getTopLeft(find.text('Home')).dy, greaterThan(700));
@@ -213,7 +217,7 @@ void main() {
             selectedIndex: 0,
             onSelected: (_) {},
             onBack: () => intercepted = true,
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             body: const SizedBox(),
           ),
         ),

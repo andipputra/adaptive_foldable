@@ -173,7 +173,7 @@ void main() {
           tester,
           s,
           materialBarBuilder,
-          policy: const MaterialPolicy(),
+          policy: const MaterialPolicy(railOnWide: true),
         );
         expect(find.byType(MaterialNavBar), findsOneWidget);
         final x = tester.getTopLeft(find.text('Home')).dx;
@@ -195,7 +195,7 @@ void main() {
         tester,
         s,
         materialBarBuilder,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
         dir: TextDirection.rtl,
       );
       expect(
@@ -316,7 +316,7 @@ void main() {
         tester,
         s,
         cupertinoBarBuilder,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       expect(tester.getTopLeft(find.text('Home')).dx, lessThan(100));
     });

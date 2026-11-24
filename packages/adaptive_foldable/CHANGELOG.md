@@ -1,3 +1,8 @@
+## Unreleased
+
+* Added `MaterialWindowSize` and `MaterialSizeClass`: Material 3 compact, medium and expanded classes for window width and height.
+* **Behaviour change (Android):** `MaterialPolicy` now keeps the bottom bar at every width and in book posture. Pass `MaterialPolicy(railOnWide: true)` to restore the previous rail from 600 dp.
+
 ## 1.0.2
 
 * Added opt-in `nativeIosBarBuilder` (native `UITabBar` at the bottom, Liquid Glass side column on iPhone Duo) and `NavDestination.sfSymbol`.

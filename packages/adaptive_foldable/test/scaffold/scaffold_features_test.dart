@@ -115,7 +115,7 @@ void main() {
         tester,
         s,
         onLayoutChanged: (p, n) => calls.add(n),
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
@@ -151,7 +151,7 @@ void main() {
       tester,
     ) async {
       final s = _sig(size: const Size(400, 800));
-      await _pump(tester, s, policy: const MaterialPolicy());
+      await _pump(tester, s, policy: const MaterialPolicy(railOnWide: true));
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
       await tester.pump();
@@ -168,7 +168,7 @@ void main() {
         tester,
         s,
         disableAnimations: true,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
@@ -185,7 +185,7 @@ void main() {
         s,
         disableAnimations: true,
         transitions: const NavTransitions(respectReduceMotion: false),
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
@@ -344,7 +344,7 @@ void main() {
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             body: const SizedBox(),
           ),
         ),
@@ -357,7 +357,7 @@ void main() {
     ) async {
       final calls = <NavLayout>[];
       final s = _sig(size: const Size(400, 800));
-      await _pump(tester, s, policy: const MaterialPolicy());
+      await _pump(tester, s, policy: const MaterialPolicy(railOnWide: true));
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
       await tester.pump();
@@ -365,7 +365,7 @@ void main() {
       await _pump(
         tester,
         s,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
         onLayoutChanged: (p, n) => calls.add(n),
       );
       await tester.pump(const Duration(seconds: 1));
@@ -387,7 +387,7 @@ void main() {
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             body: Builder(
               builder: (context) {
                 inset = MediaQuery.viewInsetsOf(context).bottom;
@@ -419,7 +419,7 @@ void main() {
             selectedIndex: 0,
             onSelected: (_) {},
             onBack: () => customBackInvoked = true,
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             body: const SizedBox(),
           ),
         ),
