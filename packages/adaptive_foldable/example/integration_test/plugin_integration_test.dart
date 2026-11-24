@@ -8,6 +8,8 @@ void main() {
   testWidgets('App starts', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Default'));
+    await tester.pumpAndSettle();
     expect(find.text('Message 0'), findsOneWidget);
   });
 }
