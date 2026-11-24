@@ -76,6 +76,14 @@ if (signals != null) {
   - Are any visual frame drops or jank spikes visible in Flutter DevTools Performance overlay?
   - Is widget state (scroll offset, form inputs, selected tab) strictly preserved across every transition?
 
+### Check 6: Android Foldables
+- **Action**: On a physical Android foldable, set book posture, tabletop posture, split-screen and rotate.
+- **Observations**:
+  - Does the bottom bar stay on one pane in book posture and never cross the hinge?
+  - Is the bar below the hinge in tabletop posture, with content above?
+  - Are touch targets at least 48 dp and are Tab, Enter and Esc usable with an external keyboard?
+  - Do picture-in-picture, camera and multi-window behave in the host app?
+
 ---
 
 ## 3. Reporting Findings
