@@ -414,7 +414,6 @@ void accessibilityTests() {
 
     Future<Size> itemSize(WidgetTester tester, TargetPlatform platform) async {
       debugDefaultTargetPlatformOverride = platform;
-      addTearDown(() => debugDefaultTargetPlatformOverride = null);
       await tester.pumpWidget(
         const Directionality(
           textDirection: TextDirection.ltr,
@@ -432,7 +431,9 @@ void accessibilityTests() {
           ),
         ),
       );
-      return tester.getSize(find.byType(NavBarItem));
+      final size = tester.getSize(find.byType(NavBarItem));
+      debugDefaultTargetPlatformOverride = null;
+      return size;
     }
 
     testWidgets('Android items have a 48x48 minimum target', (tester) async {
