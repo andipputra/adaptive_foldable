@@ -2,6 +2,7 @@ import 'dart:ui' show Rect;
 
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/nav_action_group.dart';
+import 'package:adaptive_foldable/src/model/nav_bar_style.dart';
 import 'package:adaptive_foldable/src/model/nav_destination.dart';
 import 'package:adaptive_foldable/src/model/nav_geometry.dart';
 import 'package:adaptive_foldable/src/model/nav_placement.dart';
@@ -29,6 +30,9 @@ class NavLayout {
     this.posture = Posture.unknown,
     this.actionsOpacity = 1,
     this.onOverflow,
+    this.barStyle = const NavBarStyle(),
+    this.topBarStyle = const NavBarStyle(),
+    this.actionsAtTop = false,
   }) : assert(paneCount == 1 || paneCount == 2, 'paneCount must be 1 or 2');
 
   /// The edge holding the bar.
@@ -81,6 +85,19 @@ class NavLayout {
   /// Null when nothing overflowed.
   final ValueChanged<Rect>? onOverflow;
 
+  /// Spacing, size and safe-area options the bar should honour.
+  final NavBarStyle barStyle;
+
+  /// Spacing, size and safe-area options for the top action bar.
+  final NavBarStyle topBarStyle;
+
+  /// Whether Back, the prominent action, action groups and overflow belong to the top bar.
+  ///
+  /// When true they are in [headerActions], `showBack`, `prominentAction` and
+  /// `onOverflow` of the layout given to the top bar; the layout given to the
+  /// navigation bar holds only the tabs.
+  final bool actionsAtTop;
+
   /// Returns a copy with the given fields replaced.
   ///
   /// Nullable fields keep their value when omitted; pass the matching `clear*`
@@ -106,6 +123,9 @@ class NavLayout {
     double? actionsOpacity,
     ValueChanged<Rect>? onOverflow,
     bool clearOnOverflow = false,
+    NavBarStyle? barStyle,
+    NavBarStyle? topBarStyle,
+    bool? actionsAtTop,
   }) => NavLayout(
     placement: placement ?? this.placement,
     geometry: geometry ?? this.geometry,
@@ -125,6 +145,9 @@ class NavLayout {
     posture: posture ?? this.posture,
     actionsOpacity: actionsOpacity ?? this.actionsOpacity,
     onOverflow: clearOnOverflow ? null : (onOverflow ?? this.onOverflow),
+    barStyle: barStyle ?? this.barStyle,
+    topBarStyle: topBarStyle ?? this.topBarStyle,
+    actionsAtTop: actionsAtTop ?? this.actionsAtTop,
   );
 
   @override
@@ -145,7 +168,10 @@ class NavLayout {
       other.paneCount == paneCount &&
       other.posture == posture &&
       other.actionsOpacity == actionsOpacity &&
-      other.onOverflow == onOverflow;
+      other.onOverflow == onOverflow &&
+      other.barStyle == barStyle &&
+      other.topBarStyle == topBarStyle &&
+      other.actionsAtTop == actionsAtTop;
 
   @override
   int get hashCode => Object.hash(
@@ -165,5 +191,8 @@ class NavLayout {
     posture,
     actionsOpacity,
     onOverflow,
+    barStyle,
+    topBarStyle,
+    actionsAtTop,
   );
 }

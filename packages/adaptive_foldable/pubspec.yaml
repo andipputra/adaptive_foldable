@@ -1,6 +1,6 @@
 name: adaptive_foldable
 description: A design-agnostic Flutter navigation scaffold with a fold kit.
-version: 1.0.0
+version: 1.0.2
 repository: https://github.com/andipputra/adaptive_foldable
 issue_tracker: https://github.com/andipputra/adaptive_foldable/issues
 resolution: workspace

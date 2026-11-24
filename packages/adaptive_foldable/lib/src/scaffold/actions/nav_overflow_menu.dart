@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:adaptive_foldable/src/bars/bar_strings.dart';
 import 'package:adaptive_foldable/src/bars/nav_bar_item.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 /// Row height of the default overflow menu, comfortably above the 44 pt target.
@@ -41,82 +42,112 @@ class NavOverflowMenu extends StatelessWidget {
     final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     final background = dark ? const Color(0xFF2B2930) : const Color(0xFFFFFFFF);
     final foreground = dark ? const Color(0xFFE6E0E9) : const Color(0xFF1D1B20);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final size = constraints.biggest;
-        final height = math.min(
-          items.length * kOverflowRowHeight + 16,
-          math.max(kOverflowRowHeight, size.height - 2 * _gap),
-        );
-        double left;
-        double top;
-        if (anchor.center.dx > size.width * 0.66 &&
-            anchor.top < size.height - kOverflowRowHeight * 2) {
-          left = anchor.left - kOverflowMenuWidth - _gap;
-          top = anchor.top;
-        } else if (anchor.center.dx < size.width * 0.33) {
-          left = anchor.right + _gap;
-          top = anchor.top;
-        } else {
-          left = anchor.center.dx - kOverflowMenuWidth / 2;
-          top = anchor.top - height - _gap;
-        }
-        left = left.clamp(
-          _gap,
-          math.max(_gap, size.width - kOverflowMenuWidth - _gap),
-        );
-        top = top.clamp(_gap, math.max(_gap, size.height - height - _gap));
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: Semantics(
-                label: BarStrings.dismissMenu,
-                button: true,
-                onTap: dismiss,
-                excludeSemantics: true,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: dismiss,
-                ),
-              ),
-            ),
-            Positioned(
-              left: left,
-              top: top,
-              width: kOverflowMenuWidth,
-              height: height,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: background,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    children: [
-                      for (final item in items)
-                        _MenuRow(
-                          item: item,
-                          color: item.isDestructive
-                              ? kDestructiveColor
-                              : foreground,
-                          dismiss: dismiss,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
+    final textScaler = MediaQuery.textScalerOf(context);
+    final rowHeight = math.max(
+      kOverflowRowHeight,
+      textScaler.scale(kOverflowRowHeight),
+    );
+
+    return Shortcuts(
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
       },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          DismissIntent: CallbackAction<DismissIntent>(
+            onInvoke: (_) {
+              dismiss();
+              return null;
+            },
+          ),
+        },
+        child: FocusScope(
+          autofocus: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final size = constraints.biggest;
+              final height = math.min(
+                items.length * rowHeight + 16,
+                math.max(rowHeight, size.height - 2 * _gap),
+              );
+              double left;
+              double top;
+              if (anchor.center.dx > size.width * 0.66 &&
+                  anchor.top < size.height - rowHeight * 2) {
+                left = anchor.left - kOverflowMenuWidth - _gap;
+                top = anchor.top;
+              } else if (anchor.center.dx < size.width * 0.33) {
+                left = anchor.right + _gap;
+                top = anchor.top;
+              } else {
+                left = anchor.center.dx - kOverflowMenuWidth / 2;
+                top = anchor.top - height - _gap;
+              }
+              left = left.clamp(
+                _gap,
+                math.max(_gap, size.width - kOverflowMenuWidth - _gap),
+              );
+              top = top.clamp(
+                _gap,
+                math.max(_gap, size.height - height - _gap),
+              );
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: Semantics(
+                      label: BarStrings.dismissMenu,
+                      button: true,
+                      onTap: dismiss,
+                      excludeSemantics: true,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: dismiss,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: left,
+                    top: top,
+                    width: kOverflowMenuWidth,
+                    height: height,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: background,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x33000000),
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: FocusTraversalGroup(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Column(
+                            children: [
+                              for (final item in items)
+                                _MenuRow(
+                                  item: item,
+                                  color: item.isDestructive
+                                      ? kDestructiveColor
+                                      : foreground,
+                                  dismiss: dismiss,
+                                  rowHeight: rowHeight,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 }
@@ -126,11 +157,13 @@ class _MenuRow extends StatefulWidget {
     required this.item,
     required this.color,
     required this.dismiss,
+    required this.rowHeight,
   });
 
   final NavAction item;
   final Color color;
   final VoidCallback dismiss;
+  final double rowHeight;
 
   @override
   State<_MenuRow> createState() => _MenuRowState();
@@ -179,7 +212,7 @@ class _MenuRowState extends State<_MenuRow> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: SizedBox(
-              height: kOverflowRowHeight,
+              height: widget.rowHeight,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(

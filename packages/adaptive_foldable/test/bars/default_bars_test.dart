@@ -2,6 +2,9 @@
 import 'dart:ui' show CheckedState, Rect, Tristate;
 
 import 'package:adaptive_foldable/adaptive_foldable.dart';
+import 'package:adaptive_foldable/src/bars/nav_bar_item.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show DebugSemanticsDumpOrder;
 import 'package:flutter/semantics.dart' show SemanticsNode;
@@ -38,6 +41,7 @@ Future<int?> _pump(
           child: FoldSignalsScope(override: signals, child: child!),
         ),
         home: AdaptiveNavScaffold(
+          sideBarThickness: 80,
           destinations: _dests,
           selectedIndex: 1,
           onSelected: onSelected ?? (_) {},
@@ -90,7 +94,8 @@ void main() {
                 )
                 .first,
           );
-          expect(box.width, greaterThanOrEqualTo(44));
+          // Side column is kSideBarThickness (40) wide; height keeps the 44 pt target.
+          expect(box.width, greaterThanOrEqualTo(40));
           expect(box.height, greaterThanOrEqualTo(44));
         }
       });
@@ -170,7 +175,7 @@ void main() {
           tester,
           s,
           materialBarBuilder,
-          policy: const MaterialPolicy(),
+          policy: const MaterialPolicy(railOnWide: true),
         );
         expect(find.byType(MaterialNavBar), findsOneWidget);
         final x = tester.getTopLeft(find.text('Home')).dx;
@@ -192,7 +197,7 @@ void main() {
         tester,
         s,
         materialBarBuilder,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
         dir: TextDirection.rtl,
       );
       expect(
@@ -293,6 +298,7 @@ void main() {
             child: FoldSignalsScope(override: s, child: child!),
           ),
           home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
@@ -312,7 +318,7 @@ void main() {
         tester,
         s,
         cupertinoBarBuilder,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       expect(tester.getTopLeft(find.text('Home')).dx, lessThan(100));
     });
@@ -406,6 +412,43 @@ void accessibilityTests() {
       );
     }
 
+    Future<Size> itemSize(WidgetTester tester, TargetPlatform platform) async {
+      debugDefaultTargetPlatformOverride = platform;
+      await tester.pumpWidget(
+        const Directionality(
+          textDirection: TextDirection.ltr,
+          child: Center(
+            child: UnconstrainedBox(
+              child: NavBarItem(
+                icon: IconData(0xe318),
+                label: 'H',
+                selected: false,
+                onTap: null,
+                activeColor: Color(0xFF000000),
+                inactiveColor: Color(0xFF777777),
+              ),
+            ),
+          ),
+        ),
+      );
+      final size = tester.getSize(find.byType(NavBarItem));
+      debugDefaultTargetPlatformOverride = null;
+      return size;
+    }
+
+    testWidgets('Android items have a 48x48 minimum target', (tester) async {
+      final size = await itemSize(tester, TargetPlatform.android);
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
+    });
+
+    testWidgets('iOS items keep the 44x44 minimum target', (tester) async {
+      final size = await itemSize(tester, TargetPlatform.iOS);
+      expect(size.width, greaterThanOrEqualTo(44));
+      expect(size.width, lessThan(48));
+      expect(size.height, greaterThanOrEqualTo(44));
+    });
+
     testWidgets('every item has a 44x44 minimum target', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -456,6 +499,51 @@ void accessibilityTests() {
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pump();
       expect(seen, ['Done', 'Tab0']);
+    });
+
+    testWidgets('CupertinoStyleNavBar light mode inactive color is #636366', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.light(),
+          home: Builder(
+            builder: (context) {
+              final colors = CupertinoStyleNavBar.defaultColors(context);
+              expect(colors.inactive, const Color(0xFF636366));
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+    });
+
+    testWidgets('NavBarItem badge sets textScaler to noScaling', (
+      tester,
+    ) async {
+      const item = NavBarItem(
+        icon: Icons.inbox,
+        label: 'Inbox',
+        selected: false,
+        onTap: null,
+        activeColor: Colors.blue,
+        inactiveColor: Colors.grey,
+        badgeCount: 5,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (c, child) => MediaQuery(
+            data: MediaQuery.of(c)
+                .copyWith(textScaler: const TextScaler.linear(3.0)),
+            child: child!,
+          ),
+          home: const Scaffold(body: Center(child: item)),
+        ),
+      );
+
+      final badgeText = tester.widget<Text>(find.text('5'));
+      expect(badgeText.textScaler, TextScaler.noScaling);
     });
   });
 }

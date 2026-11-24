@@ -1,6 +1,16 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
+import 'package:adaptive_foldable_example/widgets/example_page.dart';
 import 'package:flutter/material.dart';
+
+const _tints = [
+  Colors.blue,
+  Colors.indigo,
+  Colors.teal,
+  Colors.orange,
+  Colors.pink,
+  Colors.green,
+];
 
 /// A screen demonstrating [FoldAlignedGrid] with crease avoidance.
 class GridScreen extends StatelessWidget {
@@ -9,39 +19,32 @@ class GridScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Fold-Aligned Grid')),
-      body: FoldAlignedGrid(
+    return ExampleFixedPage(
+      title: 'Fold-Aligned Grid',
+      child: FoldAlignedGrid(
         itemCount: 20,
         crossAxisCountPerPane: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         itemBuilder: (context, index) {
-          final color = Colors.primaries[index % Colors.primaries.length];
-          return Card(
-            elevation: 2,
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+          final tint = _tints[index % _tints.length];
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: tint.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [color.shade200, color.shade400],
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  'Item ${index + 1}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.grid_view, color: tint),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Item ${index + 1}',
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
-                ),
+                ],
               ),
             ),
           );

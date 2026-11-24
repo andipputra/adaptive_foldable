@@ -8,6 +8,7 @@ class NavDestination {
     required this.label,
     this.selectedIcon,
     this.badgeCount,
+    this.sfSymbol,
   }) : assert(label != '', 'NavDestination.label must not be empty');
 
   /// Icon shown when the destination is not selected.
@@ -22,6 +23,9 @@ class NavDestination {
   /// Number shown in a badge, or null for none.
   final int? badgeCount;
 
+  /// SF Symbol name used by the native iOS bar; the Flutter [icon] is rendered instead when null.
+  final String? sfSymbol;
+
   /// Returns a copy with the given fields replaced.
   NavDestination copyWith({
     IconData? icon,
@@ -30,6 +34,8 @@ class NavDestination {
     bool clearSelectedIcon = false,
     int? badgeCount,
     bool clearBadgeCount = false,
+    String? sfSymbol,
+    bool clearSfSymbol = false,
   }) => NavDestination(
     icon: icon ?? this.icon,
     label: label ?? this.label,
@@ -37,6 +43,7 @@ class NavDestination {
         ? null
         : (selectedIcon ?? this.selectedIcon),
     badgeCount: clearBadgeCount ? null : (badgeCount ?? this.badgeCount),
+    sfSymbol: clearSfSymbol ? null : (sfSymbol ?? this.sfSymbol),
   );
 
   @override
@@ -45,8 +52,10 @@ class NavDestination {
       other.icon == icon &&
       other.label == label &&
       other.selectedIcon == selectedIcon &&
-      other.badgeCount == badgeCount;
+      other.badgeCount == badgeCount &&
+      other.sfSymbol == sfSymbol;
 
   @override
-  int get hashCode => Object.hash(icon, label, selectedIcon, badgeCount);
+  int get hashCode =>
+      Object.hash(icon, label, selectedIcon, badgeCount, sfSymbol);
 }

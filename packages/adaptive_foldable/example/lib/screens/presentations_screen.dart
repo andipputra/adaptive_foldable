@@ -1,92 +1,122 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
+import 'package:adaptive_foldable_example/widgets/example_page.dart';
 import 'package:flutter/material.dart';
 
 /// A screen demonstrating [showFoldAwareDialog] and [showFoldAwareModalBottomSheet].
+///
+/// Wide enough, it shows two panes; each modal is limited to one pane and the
+/// other pane stays interactive. Narrow, one pane shows and modals cover the screen.
 class PresentationsScreen extends StatelessWidget {
   /// Creates an instance of [PresentationsScreen].
   const PresentationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Modals & Anchoring')),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ColoredBox(
+      color: Theme.of(context).colorScheme.surface,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Mirrors FoldAwareTwoPane's default minimums (280 + 320).
+          final fits = constraints.maxWidth >= 600;
+          return FoldAwareTwoPane(
+            priority: fits ? TwoPanePriority.both : TwoPanePriority.start,
+            start: const _PanePage(title: 'Start pane'),
+            end: const _PanePage(title: 'End pane'),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PanePage extends StatefulWidget {
+  const _PanePage({required this.title});
+
+  final String title;
+
+  @override
+  State<_PanePage> createState() => _PanePageState();
+}
+
+class _PanePageState extends State<_PanePage> {
+  int _taps = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExampleScrollPage(
+      title: widget.title,
+      slivers: [
+        SliverToBoxAdapter(
+          child: ExampleSection(
+            header: const Text('Fold-aware dialogs'),
+            footer: const Text(
+              'Auto opens in this pane; the other pane stays usable.',
+            ),
             children: [
-              Text(
-                'Fold-Aware Dialogs',
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              FilledButton.tonal(
-                onPressed: () => _openDialog(context, FoldPaneTarget.auto),
-                child: const Text('Open Dialog (Auto Anchor)'),
-              ),
-              const SizedBox(height: 8),
-              FilledButton.tonal(
-                onPressed: () => _openDialog(context, FoldPaneTarget.start),
-                child: const Text('Open Dialog (Start Pane)'),
-              ),
-              const SizedBox(height: 8),
-              FilledButton.tonal(
-                onPressed: () => _openDialog(context, FoldPaneTarget.end),
-                child: const Text('Open Dialog (End Pane)'),
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Fold-Aware Bottom Sheets',
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => _openSheet(context, FoldPaneTarget.auto),
-                child: const Text('Open Bottom Sheet (Auto Anchor)'),
-              ),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: () => _openSheet(context, FoldPaneTarget.start),
-                child: const Text('Open Bottom Sheet (Start Pane)'),
-              ),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: () => _openSheet(context, FoldPaneTarget.end),
-                child: const Text('Open Bottom Sheet (End Pane)'),
+              for (final target in FoldPaneTarget.values)
+                ListTile(
+                  leading: const Icon(Icons.chat_bubble_outline),
+                  title: Text('Dialog: ${_label(target)}'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _openDialog(context, target),
+                ),
+            ],
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: ExampleSection(
+            header: const Text('Fold-aware bottom sheets'),
+            children: [
+              for (final target in FoldPaneTarget.values)
+                ListTile(
+                  leading: const Icon(Icons.view_agenda_outlined),
+                  title: Text('Sheet: ${_label(target)}'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _openSheet(context, target),
+                ),
+            ],
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: ExampleSection(
+            header: const Text('Interaction check'),
+            children: [
+              ListTile(
+                leading: const Icon(Icons.touch_app_outlined),
+                title: const Text('Tap me while a modal is open'),
+                subtitle: Text('Taps in ${widget.title}: $_taps'),
+                onTap: () => setState(() => _taps++),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
+
+  static String _label(FoldPaneTarget target) => switch (target) {
+    FoldPaneTarget.auto => 'Auto anchor',
+    FoldPaneTarget.start => 'Start pane',
+    FoldPaneTarget.end => 'End pane',
+  };
 
   void _openDialog(BuildContext context, FoldPaneTarget target) {
     showFoldAwareDialog(
       context: context,
       target: target,
-      builder: (dialogCtx) {
-        return AlertDialog(
-          title: Text('Anchored Dialog (${target.name})'),
-          content: Text(
-            'This dialog is anchored to the ${target.name} pane, keeping clear '
-            'of any active vertical fold.',
+      builder: (dialogCtx) => AlertDialog(
+        title: Text('Anchored dialog (${target.name})'),
+        content: Text(
+          'Anchored to the ${target.name} pane, clear of any active vertical fold.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => closeFoldAwareModal(dialogCtx),
+            child: const Text('Dismiss'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Dismiss'),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -94,36 +124,31 @@ class PresentationsScreen extends StatelessWidget {
     showFoldAwareModalBottomSheet(
       context: context,
       target: target,
-      builder: (sheetCtx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Anchored Bottom Sheet (${target.name})',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'The surface of this bottom sheet is anchored strictly to '
-                  'the ${target.name} pane, avoiding the center hinge crease.',
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(sheetCtx),
-                  child: const Text('Done'),
-                ),
-              ],
-            ),
+      builder: (sheetCtx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Anchored bottom sheet (${target.name})',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Anchored to the ${target.name} pane, avoiding the hinge crease.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () => closeFoldAwareModal(sheetCtx),
+                child: const Text('Done'),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

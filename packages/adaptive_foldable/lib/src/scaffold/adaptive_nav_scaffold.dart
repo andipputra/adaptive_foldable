@@ -3,11 +3,13 @@ import 'dart:math' as math;
 
 import 'package:adaptive_foldable/src/bars/cupertino/cupertino_style_nav_bar.dart';
 import 'package:adaptive_foldable/src/bars/material/material_nav_bar.dart';
+import 'package:adaptive_foldable/src/bars/nav_top_bar.dart';
 import 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart';
 import 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
 import 'package:adaptive_foldable/src/layout/overflow_resolver.dart';
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/nav_axis.dart';
+import 'package:adaptive_foldable/src/model/nav_bar_style.dart';
 import 'package:adaptive_foldable/src/model/nav_destination.dart';
 import 'package:adaptive_foldable/src/model/nav_geometry.dart';
 import 'package:adaptive_foldable/src/model/nav_insets.dart';
@@ -79,6 +81,13 @@ class AdaptiveNavScaffold extends StatefulWidget {
     this.nativeOverflowMenu = false,
     this.onLayoutChanged,
     this.extendBodyBehindBar = false,
+    this.onBack,
+    this.backgroundColor,
+    this.sideBarThickness = kSideBarThickness,
+    this.actionsAtTop = false,
+    this.topBarBuilder,
+    this.barStyle = const NavBarStyle(),
+    this.topBarStyle = const NavBarStyle(),
   }) : assert(destinations.length > 0, 'destinations must not be empty'),
        assert(
          selectedIndex >= 0 && selectedIndex < destinations.length,
@@ -124,6 +133,37 @@ class AdaptiveNavScaffold extends StatefulWidget {
   /// Content stays clear: `MediaQuery.padding` still reserves the bar extent.
   /// Has no effect on a bottom bar, or when a fold cut the bar short.
   final bool extendBodyBehindBar;
+
+  /// Optional callback invoked when the Back action is triggered, before fallback [Navigator.maybePop].
+  final VoidCallback? onBack;
+
+  /// Paints behind the body and bar, so areas the bar reserves but does not draw match the app.
+  ///
+  /// Null paints nothing.
+  final Color? backgroundColor;
+
+  /// Width in dp of a side bar, excluding the system inset; text scale still adds to it.
+  final double sideBarThickness;
+
+  /// Whether Back, the prominent action, action groups and overflow go to a top bar while the bar holds only the tabs, like a native app.
+  ///
+  /// The top bar spans the width left by a side column, is cut around an active
+  /// fold, and the body is inset below it. When false, actions stay where the
+  /// placement policy puts them.
+  final bool actionsAtTop;
+
+  /// Draws the top bar when [actionsAtTop] is true; null uses [NavTopBar].
+  ///
+  /// Receives the layout with `showBack`, `prominentAction`, `headerActions` and `onOverflow`.
+  final NavBarBuilder? topBarBuilder;
+
+  /// Spacing, size and safe-area options for the bar; honoured by the default bars.
+  ///
+  /// `height` sets the bottom bar content height in dp.
+  final NavBarStyle barStyle;
+
+  /// Spacing, size and safe-area options for the top bar; `height` is its content height in dp.
+  final NavBarStyle topBarStyle;
 
   @override
   State<AdaptiveNavScaffold> createState() => _AdaptiveNavScaffoldState();
@@ -342,8 +382,18 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
       ),
       direction: direction,
       textScale: media.textScaler.scale(1),
+      sideThickness: widget.sideBarThickness,
+      bottomThickness: widget.barStyle.height ?? kBottomBarThickness,
+      bottomSafeArea: widget.barStyle.respectSafeArea,
+      topBarHeight: widget.actionsAtTop
+          ? (widget.topBarStyle.height ?? kTopBarHeight)
+          : null,
+      topBarSafeArea: widget.topBarStyle.respectSafeArea,
     );
     final layout = NavLayout(
+      barStyle: widget.barStyle,
+      topBarStyle: widget.topBarStyle,
+      actionsAtTop: widget.actionsAtTop,
       placement: placement,
       geometry: geometry,
       destinations: widget.destinations,
@@ -400,11 +450,32 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
             reduceMotion: _reduceMotion,
           );
           final composed = _compose(layout, view, media, geometry);
+          final barLayout = widget.actionsAtTop
+              ? composed.copyWith(
+                  showBack: false,
+                  clearOnBack: true,
+                  clearProminentAction: true,
+                  visibleActions: const [],
+                  headerActions: const [],
+                  clearOnOverflow: true,
+                )
+              : composed;
           final bar =
-              widget.barBuilder?.call(context, composed) ??
+              widget.barBuilder?.call(context, barLayout) ??
               (_isApple
-                  ? cupertinoBarBuilder(context, composed)
-                  : materialBarBuilder(context, composed));
+                  ? cupertinoBarBuilder(context, barLayout)
+                  : materialBarBuilder(context, barLayout));
+          final topRect = geometry.topBarRect;
+          final topBar =
+              widget.actionsAtTop && topRect != null && !topRect.isEmpty
+              ? widget.topBarBuilder?.call(context, composed) ??
+                    NavTopBar(
+                      layout: composed,
+                      colors: _isApple
+                          ? CupertinoStyleNavBar.defaultColors(context)
+                          : MaterialNavBar.defaultColors(context),
+                    )
+              : null;
           final covered =
               scaffoldCovered || (view.entry?.isCoveredByOverlay ?? false);
           final overflowed = composed.overflowedActions;
@@ -423,6 +494,10 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
               key: _stackKey,
               textDirection: direction,
               children: [
+                if (widget.backgroundColor != null)
+                  Positioned.fill(
+                    child: ColoredBox(color: widget.backgroundColor!),
+                  ),
                 body!,
                 Positioned.fromRect(
                   rect: geometry.barRect,
@@ -441,6 +516,14 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
                     ),
                   ),
                 ),
+                if (topBar != null)
+                  Positioned.fromRect(
+                    rect: topRect!,
+                    child: IgnorePointer(
+                      ignoring: covered,
+                      child: Opacity(opacity: covered ? 0.4 : 1, child: topBar),
+                    ),
+                  ),
                 if (anchor != null)
                   Positioned.fill(
                     child:
@@ -468,17 +551,23 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
   ) {
     final entry = view.entry;
     final anchorEntry = entry ?? _registry.anchorFor(NavPaneScope.mainPane);
-    final showBack = NavBackController.canGoBack(anchorEntry);
+    final showBack = NavBackController.canGoBack(
+      anchorEntry,
+      hasCustomBack: widget.onBack != null,
+    );
     final actions = entry?.actions ?? PageActions.empty;
     final extent = geometry.itemAxis == NavAxis.vertical
         ? geometry.barRect.height
         : geometry.barRect.width;
     final opacity = (view.opacity * _tabFade.value).clamp(0.0, 1.0);
 
-    if (base.placement.actionsInHeader) {
+    if (base.placement.actionsInHeader || widget.actionsAtTop) {
       final headerExtent =
+          geometry.topBarRect?.width ??
           media.size.width -
-          (geometry.itemAxis == NavAxis.vertical ? geometry.barRect.width : 0);
+              (geometry.itemAxis == NavAxis.vertical
+                  ? geometry.barRect.width
+                  : 0);
       final fit = resolveOverflow(
         actions: actions,
         extent: headerExtent,
@@ -489,7 +578,9 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
       );
       return base.copyWith(
         showBack: showBack,
-        onBack: showBack ? () => NavBackController.goBack(anchorEntry) : null,
+        onBack: showBack
+            ? () => NavBackController.goBack(anchorEntry, onBack: widget.onBack)
+            : null,
         prominentAction: actions.prominentAction,
         headerActions: fit.visibleGroups,
         overflowedActions: fit.overflowed,
@@ -510,7 +601,9 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
     );
     return base.copyWith(
       showBack: showBack,
-      onBack: showBack ? () => NavBackController.goBack(anchorEntry) : null,
+      onBack: showBack
+          ? () => NavBackController.goBack(anchorEntry, onBack: widget.onBack)
+          : null,
       prominentAction: actions.prominentAction,
       visibleActions: fit.visibleGroups,
       overflowedActions: fit.overflowed,
@@ -533,13 +626,13 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
     EdgeInsets adjust(EdgeInsets p) => extend
         ? EdgeInsets.fromLTRB(
             math.max(p.left, inset.left),
-            p.top,
+            math.max(p.top, inset.top),
             math.max(p.right, inset.right),
             math.max(p.bottom, inset.bottom),
           )
         : EdgeInsets.fromLTRB(
             inset.left > 0 ? 0 : p.left,
-            p.top,
+            inset.top > 0 ? 0 : p.top,
             inset.right > 0 ? 0 : p.right,
             inset.bottom > 0 ? 0 : p.bottom,
           );
@@ -559,15 +652,23 @@ class _AdaptiveNavScaffoldState extends State<AdaptiveNavScaffold>
   /// Padding that keeps the body clear of the bar, derived from where the bar sits.
   EdgeInsets _bodyInsets(NavGeometry geometry, Size size) {
     final r = geometry.barRect;
-    if (r.isEmpty) return EdgeInsets.zero;
+    final top = geometry.topBarRect;
+    final topInset = top == null || top.isEmpty
+        ? 0.0
+        : top.bottom.clamp(0.0, size.height);
+    if (r.isEmpty) return EdgeInsets.only(top: topInset);
     if (geometry.itemAxis == NavAxis.horizontal) {
       return EdgeInsets.only(
+        top: topInset,
         bottom: (size.height - r.top).clamp(0, size.height),
       );
     }
     if (r.center.dx < size.width / 2) {
-      return EdgeInsets.only(left: r.right.clamp(0, size.width));
+      return EdgeInsets.only(top: topInset, left: r.right.clamp(0, size.width));
     }
-    return EdgeInsets.only(right: (size.width - r.left).clamp(0, size.width));
+    return EdgeInsets.only(
+      top: topInset,
+      right: (size.width - r.left).clamp(0, size.width),
+    );
   }
 }

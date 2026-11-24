@@ -1,3 +1,28 @@
+## 1.0.2
+
+* Added opt-in `nativeIosBarBuilder` (native `UITabBar` at the bottom, Liquid Glass side column on iPhone Duo) and `NavDestination.sfSymbol`.
+* Added `AdaptiveNavScaffold.actionsAtTop` with `NavTopBar` and `topBarBuilder`: Back, actions and overflow in a top bar, tabs in the bottom bar, like a native app. The top bar is cut around an active fold and the body is inset below it.
+* Added `NavBarStyle` (`padding`, `itemSpacing`, `alignment`, `height`, `respectSafeArea`) through `barStyle` / `topBarStyle`, honoured by the default bars.
+* Updated fold-aware dialogs and bottom sheets so they are scoped to the target pane in visible `FoldAwareTwoPane` layouts. Added `closeFoldAwareModal` for closing pane-scoped dialogs and sheets.
+* Added `MaterialWindowSize` and `MaterialSizeClass`: Material 3 compact, medium and expanded classes for window width and height.
+* Default bars and `NavPaneHeaderBar` actions now use a 48 dp minimum tap target on Android (44 pt elsewhere).
+* Book-posture bottom bars stay on the larger pane; equal panes pick the leading side.
+* **Behaviour change (Android):** `MaterialPolicy` now keeps the bottom bar at every width and in book posture. Pass `MaterialPolicy(railOnWide: true)` to restore the previous rail from 600 dp.
+
+## 1.0.1
+
+* **Fold Kit**:
+  * Added `FoldBuilder` widget to rebuild UI based on ambient `FoldSignals`.
+  * Preserved physical fold alignment in `FoldAlignedGrid` for RTL layouts via explicit LTR row direction.
+  * Wrapped each pane in `FoldAwareTwoPane` in a `FocusTraversalGroup`.
+  * Checked `NavAction.enabled` in `NavPaneHeaderBar` action buttons and popup menu items; removed redundant outer `Semantics`.
+* **Scaffold & Navigation**:
+  * Added optional `onBack` callback to `AdaptiveNavScaffold` and `NavBackController` to allow custom navigation interception before fallback `Navigator.maybePop`.
+  * Added Escape key shortcut (`DismissIntent`) to `NavOverflowMenu`, responsive row height based on `TextScaler`, and `FocusTraversalGroup`.
+* **Bars & Accessibility**:
+  * Set `TextScaler.noScaling` on `NavBarItem` badge text to prevent badge overflow at large text scales.
+  * Adjusted Cupertino light mode inactive color from `#8E8E93` to `#636366` to satisfy WCAG AA contrast (>=4.5:1 against `#F9F9F9`).
+
 ## 1.0.0
 
 First stable release. Labelled **simulator-verified** (verified on the iPhone Duo simulator in Xcode 27.1+ and Android foldable emulator). Physical hardware testing checklist published in `docs/hardware_feedback_checklist.md`.

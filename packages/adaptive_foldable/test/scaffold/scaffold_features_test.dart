@@ -30,6 +30,7 @@ Future<void> _pump(
         child: FoldSignalsScope(override: signals, child: child!),
       ),
       home: AdaptiveNavScaffold(
+        sideBarThickness: 80,
         destinations: _dests,
         selectedIndex: 0,
         onSelected: (_) {},
@@ -114,7 +115,7 @@ void main() {
         tester,
         s,
         onLayoutChanged: (p, n) => calls.add(n),
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
@@ -150,7 +151,7 @@ void main() {
       tester,
     ) async {
       final s = _sig(size: const Size(400, 800));
-      await _pump(tester, s, policy: const MaterialPolicy());
+      await _pump(tester, s, policy: const MaterialPolicy(railOnWide: true));
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
       await tester.pump();
@@ -167,7 +168,7 @@ void main() {
         tester,
         s,
         disableAnimations: true,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
@@ -184,7 +185,7 @@ void main() {
         s,
         disableAnimations: true,
         transitions: const NavTransitions(respectReduceMotion: false),
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
@@ -339,10 +340,11 @@ void main() {
         MaterialApp(
           builder: (c, child) => FoldSignalsScope(override: s, child: child!),
           home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             body: const SizedBox(),
           ),
         ),
@@ -355,7 +357,7 @@ void main() {
     ) async {
       final calls = <NavLayout>[];
       final s = _sig(size: const Size(400, 800));
-      await _pump(tester, s, policy: const MaterialPolicy());
+      await _pump(tester, s, policy: const MaterialPolicy(railOnWide: true));
       s.update(viewSize: const Size(900, 800));
       tester.view.physicalSize = const Size(900, 800);
       await tester.pump();
@@ -363,7 +365,7 @@ void main() {
       await _pump(
         tester,
         s,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
         onLayoutChanged: (p, n) => calls.add(n),
       );
       await tester.pump(const Duration(seconds: 1));
@@ -381,10 +383,11 @@ void main() {
         MaterialApp(
           builder: (c, child) => FoldSignalsScope(override: s, child: child!),
           home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             body: Builder(
               builder: (context) {
                 inset = MediaQuery.viewInsetsOf(context).bottom;
@@ -396,6 +399,37 @@ void main() {
       );
       expect(inset, lessThan(300));
       expect(inset, greaterThanOrEqualTo(0));
+    });
+
+    testWidgets('custom onBack callback intercepts back navigation', (
+      tester,
+    ) async {
+      bool customBackInvoked = false;
+      final s = _sig(size: const Size(400, 800));
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = s.viewSize;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (c, child) => FoldSignalsScope(override: s, child: child!),
+          home: AdaptiveNavScaffold(
+            sideBarThickness: 80,
+            destinations: _dests,
+            selectedIndex: 0,
+            onSelected: (_) {},
+            onBack: () => customBackInvoked = true,
+            policy: const MaterialPolicy(railOnWide: true),
+            body: const SizedBox(),
+          ),
+        ),
+      );
+
+      expect(find.text('Back'), findsOneWidget);
+      await tester.tap(find.text('Back'));
+      await tester.pump();
+
+      expect(customBackInvoked, isTrue);
     });
   });
 }

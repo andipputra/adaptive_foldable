@@ -1,4 +1,5 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
+import 'package:adaptive_foldable/src/fold_kit/fold_pane_modal.dart';
 import 'package:adaptive_foldable/src/scaffold/actions/nav_pane_scope.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,10 @@ enum FoldPaneTarget {
 ///
 /// When an active vertical fold exists, the dialog is positioned strictly within
 /// the bounds of the chosen [target] pane, avoiding the fold crease entirely.
-/// When flat or without an active fold, behaves as a standard centered dialog.
+/// Inside a [FoldAwareTwoPane] the dialog and its barrier are limited to the
+/// [target] pane, so the other pane stays visible and interactive; close it
+/// with [closeFoldAwareModal]. Otherwise it is a standard route dialog, which
+/// also closes with [closeFoldAwareModal] or `Navigator.pop`.
 Future<T?> showFoldAwareDialog<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -33,6 +37,18 @@ Future<T?> showFoldAwareDialog<T>({
 }) {
   final callerPaneId = NavPaneScope.idOf(context);
   final signals = FoldSignals.of(context);
+
+  final paneOverlay = paneOverlayFor(context, target);
+  if (paneOverlay != null) {
+    return showPaneModal<T>(
+      overlay: paneOverlay,
+      builder: builder,
+      isSheet: false,
+      dismissible: barrierDismissible,
+      barrierColor: barrierColor ?? const Color(0x00000000),
+      barrierLabel: barrierLabel,
+    );
+  }
 
   return showDialog<T>(
     context: context,
@@ -52,6 +68,21 @@ Future<T?> showFoldAwareDialog<T>({
       );
     },
   );
+}
+
+/// Returns the pane overlay that should host a modal for [target], or null
+/// when [context] is not inside a visible two-pane layout.
+OverlayState? paneOverlayFor(BuildContext context, FoldPaneTarget target) {
+  final overlays = FoldPaneOverlays.maybeOf(context);
+  if (overlays == null) return null;
+  final isStart = switch (target) {
+    FoldPaneTarget.start => true,
+    FoldPaneTarget.end => false,
+    FoldPaneTarget.auto => NavPaneScope.idOf(context) == NavPaneScope.startPane,
+  };
+  final overlay = overlays.overlayFor(isStart: isStart);
+  if (overlay == null || !TickerMode.of(overlay.context)) return null;
+  return overlay;
 }
 
 class _FoldAwareDialogContainer extends StatelessWidget {

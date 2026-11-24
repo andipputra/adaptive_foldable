@@ -25,7 +25,11 @@ NavGeometry _g(
   signals: s,
   viewPadding: pad,
   direction: dir,
+  sideThickness: _side,
 );
+
+/// Explicit side-column width; the library default is 0.
+const double _side = 80;
 
 void main() {
   group('bottom bar', () {
@@ -68,7 +72,7 @@ void main() {
       );
       expect(g.barRect.top, 40);
       expect(g.barRect.right, 678);
-      expect(g.barRect.width, kSideBarThickness);
+      expect(g.barRect.width, _side);
       expect(g.skipRegion, isNotNull);
       expect(g.skipRegion!.bottom, 40);
       expect(g.itemAxis, NavAxis.vertical);
@@ -106,7 +110,7 @@ void main() {
         pad: const NavInsets(top: 24, left: 44),
       );
       expect(g.barRect.top, 24);
-      expect(g.barRect.width, kSideBarThickness + 44);
+      expect(g.barRect.width, _side + 44);
     });
 
     test('logical edges flip with direction, physical edges do not', () {
@@ -188,6 +192,52 @@ void main() {
         expect(g.barRect.overlaps(f), isFalse);
       }
       expect(g.barRect.width, greaterThan(300));
+    });
+  });
+
+  group('book posture: bottom bar stays on the larger pane', () {
+    const hinge = 10.0;
+    NavGeometry bookBar(double foldLeft, TextDirection dir) => _g(
+      NavEdge.bottom,
+      _s(
+        const Size(1000, 600),
+        folds: [Rect.fromLTWH(foldLeft, 0, hinge, 600)],
+      ),
+      dir: dir,
+    );
+
+    test('larger left pane keeps the bar left of the hinge', () {
+      final g = bookBar(600, TextDirection.ltr);
+      expect(g.barRect.left, 0);
+      expect(g.barRect.right, 600 - kFoldClearance);
+    });
+
+    test('larger right pane keeps the bar right of the hinge', () {
+      final g = bookBar(300, TextDirection.ltr);
+      expect(g.barRect.left, 300 + hinge + kFoldClearance);
+      expect(g.barRect.right, 1000);
+    });
+
+    test('equal panes pick the leading side', () {
+      final ltr = bookBar(495, TextDirection.ltr);
+      expect(ltr.barRect.right, 495 - kFoldClearance);
+      final rtl = bookBar(495, TextDirection.rtl);
+      expect(rtl.barRect.left, 495 + hinge + kFoldClearance);
+      expect(rtl.barRect.right, 1000);
+    });
+
+    test('the bar never straddles the hinge', () {
+      for (final left in [100.0, 495.0, 700.0]) {
+        for (final dir in TextDirection.values) {
+          final g = bookBar(left, dir);
+          final hingeRect = Rect.fromLTWH(left, 0, hinge, 600);
+          expect(g.barRect.overlaps(hingeRect), isFalse);
+          expect(
+            g.barRect.left < left && g.barRect.right > left + hinge,
+            isFalse,
+          );
+        }
+      }
     });
   });
 

@@ -89,4 +89,69 @@ void main() {
     await tester.tap(find.text('Info'));
     expect(overflowTapped, isTrue);
   });
+
+  testWidgets('NavPaneHeaderBar respects disabled action and overflow item', (
+    tester,
+  ) async {
+    bool tapped = false;
+    bool overflowTapped = false;
+    final action = NavAction(
+      icon: Icons.search,
+      label: 'Search',
+      enabled: false,
+      onPressed: () => tapped = true,
+    );
+    final overflowAction = NavAction(
+      icon: Icons.info,
+      label: 'Info',
+      enabled: false,
+      onPressed: () => overflowTapped = true,
+    );
+
+    final registry = NavActionRegistry();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NavActionScope(
+          registry: registry,
+          child: Scaffold(
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(44),
+              child: NavPaneHeaderBar(
+                actionsOverride: PageActions(
+                  groups: [
+                    NavActionGroup([action]),
+                  ],
+                  overflowItems: [overflowAction],
+                ),
+              ),
+            ),
+            body: const SizedBox(),
+          ),
+        ),
+      ),
+    );
+
+    // Direct action button disabled
+    final iconButton = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.search),
+    );
+    expect(iconButton.onPressed, isNull);
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.search));
+    await tester.pump();
+    expect(tapped, isFalse);
+
+    // Overflow item disabled
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    final popupItem = tester.widget<PopupMenuItem<NavAction>>(
+      find.byType(PopupMenuItem<NavAction>),
+    );
+    expect(popupItem.enabled, isFalse);
+
+    await tester.tap(find.text('Info'));
+    await tester.pump();
+    expect(overflowTapped, isFalse);
+  });
 }

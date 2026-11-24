@@ -320,7 +320,7 @@ void main() {
             destinations: _dests,
             selectedIndex: 0,
             onSelected: (_) {},
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             barBuilder: (context, layout) {
               seen = layout;
               return const SizedBox.expand();
@@ -603,7 +603,7 @@ void reviewRegressionTests() {
               destinations: _dests,
               selectedIndex: 0,
               onSelected: (_) {},
-              policy: const MaterialPolicy(),
+              policy: const MaterialPolicy(railOnWide: true),
               barBuilder: (c, l) {
                 seen = l;
                 return const SizedBox.expand();

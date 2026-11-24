@@ -19,12 +19,25 @@ class MaterialBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = layout.barStyle;
     return ColoredBox(
       color: colors.background,
       child: Padding(
         padding: EdgeInsets.only(bottom: layout.geometry.homeIndicatorGap),
-        child: Row(
-          children: buildNavBarItems(layout, colors, tabsExpand: true),
+        child: Padding(
+          padding: paddingFor(style, EdgeInsets.zero),
+          child: Row(
+            mainAxisAlignment: mainAxisFor(style.alignment),
+            children: spaceItems(
+              buildNavBarItems(
+                layout,
+                colors,
+                tabsExpand: style.alignment == null,
+              ),
+              style.itemSpacing,
+              Axis.horizontal,
+            ),
+          ),
         ),
       ),
     );

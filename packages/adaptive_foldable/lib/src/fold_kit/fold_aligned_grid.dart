@@ -103,6 +103,7 @@ class FoldAlignedGrid extends StatelessWidget {
                 bottom: isLastRow ? 0.0 : mainAxisSpacing,
               ),
               child: Row(
+                textDirection: TextDirection.ltr,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left Pane
