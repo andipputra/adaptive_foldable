@@ -217,6 +217,7 @@ void main() {
             home: FoldSignalsScope(
               override: signals,
               child: AdaptiveNavScaffold(
+                sideBarThickness: 80,
                 destinations: const [
                   NavDestination(icon: Icons.home, label: 'Home'),
                 ],

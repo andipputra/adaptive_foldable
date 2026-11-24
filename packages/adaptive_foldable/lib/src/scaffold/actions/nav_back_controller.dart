@@ -16,12 +16,19 @@ class NavBackController {
     return Navigator.maybeOf(context);
   }
 
-  /// Whether the pane's navigator has a route to go back to.
-  static bool canGoBack(NavActionEntry? entry) =>
-      navigatorOf(entry)?.canPop() ?? false;
+  /// Whether the pane's navigator has a route to go back to, or a custom back callback is provided.
+  static bool canGoBack(NavActionEntry? entry, {bool hasCustomBack = false}) =>
+      hasCustomBack || (navigatorOf(entry)?.canPop() ?? false);
 
-  /// Pops the pane's navigator, or does nothing when there is none.
-  static Future<void> goBack(NavActionEntry? entry) async {
+  /// Pops the pane's navigator, or invokes [onBack] if provided before fallback [Navigator.maybePop].
+  static Future<void> goBack(
+    NavActionEntry? entry, {
+    VoidCallback? onBack,
+  }) async {
+    if (onBack != null) {
+      onBack();
+      return;
+    }
     await navigatorOf(entry)?.maybePop();
   }
 }

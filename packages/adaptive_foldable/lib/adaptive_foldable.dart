@@ -5,6 +5,9 @@ export 'package:adaptive_foldable/src/bars/cupertino/cupertino_style_nav_bar.dar
     show CupertinoStyleNavBar, cupertinoBarBuilder;
 export 'package:adaptive_foldable/src/bars/material/material_nav_bar.dart'
     show MaterialNavBar, materialBarBuilder;
+export 'package:adaptive_foldable/src/bars/native/native_ios_nav_bar.dart'
+    show NativeIosNavBar, nativeIosBarBuilder;
+export 'package:adaptive_foldable/src/bars/nav_top_bar.dart' show NavTopBar;
 export 'package:adaptive_foldable/src/debug/debug_report.dart'
     show formatSignalsReport;
 export 'package:adaptive_foldable/src/debug/fold_debug_overlay.dart'
@@ -17,6 +20,10 @@ export 'package:adaptive_foldable/src/fold_kit/fold_aware_dialog.dart'
     show FoldPaneTarget, showFoldAwareDialog;
 export 'package:adaptive_foldable/src/fold_kit/fold_aware_two_pane.dart'
     show FoldAwareTwoPane, TwoPanePriority;
+export 'package:adaptive_foldable/src/fold_kit/fold_builder.dart'
+    show FoldBuilder, FoldWidgetBuilder;
+export 'package:adaptive_foldable/src/fold_kit/fold_pane_modal.dart'
+    show closeFoldAwareModal;
 export 'package:adaptive_foldable/src/fold_kit/nav_pane_header_bar.dart'
     show NavPaneHeaderBar;
 export 'package:adaptive_foldable/src/layout/geometry_resolver.dart';
@@ -26,6 +33,7 @@ export 'package:adaptive_foldable/src/model/nav_action.dart';
 export 'package:adaptive_foldable/src/model/nav_action_group.dart';
 export 'package:adaptive_foldable/src/model/nav_action_placement.dart';
 export 'package:adaptive_foldable/src/model/nav_axis.dart';
+export 'package:adaptive_foldable/src/model/nav_bar_style.dart';
 export 'package:adaptive_foldable/src/model/nav_compression.dart';
 export 'package:adaptive_foldable/src/model/nav_destination.dart';
 export 'package:adaptive_foldable/src/model/nav_geometry.dart';
@@ -55,4 +63,4 @@ export 'package:adaptive_foldable/src/signals/fold_signals_scope.dart'
 export 'package:adaptive_foldable/src/signals/signal_types.dart';
 
 /// The current version of the adaptive_foldable package.
-const String adaptiveFoldableVersion = '1.0.0';
+const String adaptiveFoldableVersion = '1.0.1';

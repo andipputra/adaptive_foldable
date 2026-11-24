@@ -123,8 +123,10 @@ void main() {
       expect(controller.offset, greaterThan(0.0));
     });
 
-    testWidgets('mirrors items under RTL text direction', (tester) async {
-      final foldRect = const Rect.fromLTWH(380, 0, 40, 600);
+    testWidgets('preserves physical fold alignment under RTL text direction', (
+      tester,
+    ) async {
+      final foldRect = const Rect.fromLTWH(280, 0, 40, 600);
       final signals = FakeFoldSignals(
         viewSize: const Size(800, 600),
         activeFolds: [foldRect],
@@ -140,7 +142,10 @@ void main() {
                 body: FoldAlignedGrid(
                   itemCount: 4,
                   crossAxisCountPerPane: 1,
-                  itemBuilder: (context, index) => Text('RTL Item $index'),
+                  itemBuilder: (context, index) => Container(
+                    key: ValueKey('rtl_tile_$index'),
+                    child: Text('RTL Item $index'),
+                  ),
                 ),
               ),
             ),
@@ -148,11 +153,18 @@ void main() {
         ),
       );
 
-      final item0Pos = tester.getTopLeft(find.text('RTL Item 0'));
-      final item1Pos = tester.getTopLeft(find.text('RTL Item 1'));
+      final item0Rect = tester.getRect(
+        find.byKey(const ValueKey('rtl_tile_0')),
+      );
+      final item1Rect = tester.getRect(
+        find.byKey(const ValueKey('rtl_tile_1')),
+      );
 
-      // In RTL, Item 0 starts on the leading (right) side
-      expect(item0Pos.dx, greaterThan(item1Pos.dx));
+      // Physical alignment: Left pane stays left of fold, right pane stays right of fold
+      expect(item0Rect.right, lessThanOrEqualTo(foldRect.left));
+      expect(item1Rect.left, greaterThanOrEqualTo(foldRect.right));
+      expect(item0Rect.overlaps(foldRect), isFalse);
+      expect(item1Rect.overlaps(foldRect), isFalse);
     });
   });
 }

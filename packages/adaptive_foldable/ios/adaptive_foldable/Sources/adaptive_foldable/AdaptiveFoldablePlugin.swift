@@ -38,6 +38,10 @@ public class AdaptiveFoldablePlugin: NSObject, FlutterPlugin, FlutterStreamHandl
     let instance = AdaptiveFoldablePlugin()
     instance.registrar = registrar
     registrar.addMethodCallDelegate(instance, channel: methodChannel)
+    registrar.register(
+      NativeNavBarFactory(messenger: registrar.messenger()),
+      withId: "dev.adaptivefoldable/native_bar"
+    )
     eventChannel.setStreamHandler(instance)
 
     DispatchQueue.main.async {

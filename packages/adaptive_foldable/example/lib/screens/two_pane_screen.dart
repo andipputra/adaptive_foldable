@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/adaptive_foldable.dart';
+import 'package:adaptive_foldable_example/widgets/example_page.dart';
 import 'package:flutter/material.dart';
 
 /// Item data model for the two-pane example.
@@ -72,17 +73,35 @@ class TwoPaneScreen extends StatefulWidget {
 
 class _TwoPaneScreenState extends State<TwoPaneScreen> {
   int _selectedIndex = 0;
-  TwoPanePriority _priority = TwoPanePriority.both;
+
+  // Starts list-only; selecting an item switches to both panes when they fit.
+  TwoPanePriority _priority = TwoPanePriority.start;
+  bool _selected = false;
+  bool _fits = true;
 
   @override
   Widget build(BuildContext context) {
     final selectedDoc = sampleDocuments[_selectedIndex];
 
-    return Scaffold(
-      body: FoldAwareTwoPane(
-        priority: _priority,
-        start: _buildListPane(context),
-        end: _buildDetailPane(context, selectedDoc),
+    return ColoredBox(
+      color: Theme.of(context).colorScheme.surface,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Mirrors FoldAwareTwoPane's default minimums (280 + 320).
+          _fits = constraints.maxWidth >= 600;
+          // Before a selection show the list only; afterwards show both panes,
+          // or the detail alone when they do not fit.
+          final priority = !_selected
+              ? TwoPanePriority.start
+              : _fits
+              ? TwoPanePriority.both
+              : _priority;
+          return FoldAwareTwoPane(
+            priority: priority,
+            start: _buildListPane(context),
+            end: _buildDetailPane(context, selectedDoc),
+          );
+        },
       ),
     );
   }
@@ -91,7 +110,12 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
     return AdaptiveNavActions(
       groups: [
         NavActionGroup([
-          NavAction(icon: Icons.filter_list, label: 'Filter', onPressed: () {}),
+          NavAction(
+            icon: Icons.filter_list,
+            sfSymbol: 'line.3.horizontal.decrease',
+            label: 'Filter',
+            onPressed: () {},
+          ),
         ]),
       ],
       child: Column(
@@ -101,32 +125,26 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
             leading: const Icon(Icons.folder_outlined),
           ),
           Expanded(
-            child: ListView.separated(
+            child: ListView(
               key: const PageStorageKey('two_pane_list'),
-              itemCount: sampleDocuments.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final doc = sampleDocuments[index];
-                final isSelected = index == _selectedIndex;
-                return ListTile(
-                  selected: isSelected,
-                  title: Text(
-                    doc.title,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  subtitle: Text(doc.date),
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = index;
-                      _priority = TwoPanePriority.end;
-                    });
-                  },
-                );
-              },
+              children: [
+                ExampleSection(
+                  children: [
+                    for (var i = 0; i < sampleDocuments.length; i++)
+                      ListTile(
+                        selected: i == _selectedIndex,
+                        title: Text(sampleDocuments[i].title),
+                        subtitle: Text(sampleDocuments[i].date),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => setState(() {
+                          _selectedIndex = i;
+                          _selected = true;
+                          _priority = TwoPanePriority.end;
+                        }),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -138,18 +156,21 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
     return AdaptiveNavActions(
       prominentAction: NavAction(
         icon: Icons.edit_outlined,
+        sfSymbol: 'pencil',
         label: 'Edit',
         onPressed: () {},
       ),
       groups: [
         NavActionGroup([
           NavAction(
-            icon: Icons.share_outlined,
+            icon: Icons.share,
+            sfSymbol: 'square.and.arrow.up',
             label: 'Share',
             onPressed: () {},
           ),
           NavAction(
             icon: Icons.archive_outlined,
+            sfSymbol: 'archivebox',
             label: 'Archive',
             onPressed: () {},
           ),
@@ -161,13 +182,12 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
           NavPaneHeaderBar(
             title: Text(doc.title),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
               tooltip: 'Back to documents',
-              onPressed: () {
-                setState(() {
-                  _priority = TwoPanePriority.start;
-                });
-              },
+              onPressed: () => setState(() {
+                _priority = TwoPanePriority.start;
+                _selected = false;
+              }),
+              icon: const Icon(Icons.arrow_back),
             ),
           ),
           Expanded(
@@ -178,22 +198,19 @@ class _TwoPaneScreenState extends State<TwoPaneScreen> {
                 children: [
                   Text(
                     doc.title,
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Updated ${doc.date}',
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: Colors.grey.shade600),
+                    style: Theme.of(context).textTheme.labelMedium,
                   ),
                   const SizedBox(height: 16),
-                  const Divider(),
                   const SizedBox(height: 16),
                   Text(
                     doc.content,
                     style: Theme.of(context).textTheme.bodyLarge
-                        ?.copyWith(height: 1.5),
+                        ?.copyWith(height: 1.4),
                   ),
                 ],
               ),

@@ -213,5 +213,71 @@ void main() {
       // In RTL, start is placed on the trailing side (right), end on leading side (left)
       expect(startPos.dx, greaterThan(endPos.dx));
     });
+
+    testWidgets('encloses each pane in FocusTraversalGroup', (tester) async {
+      final signals = FakeFoldSignals(
+        viewSize: const Size(800, 600),
+        activeFolds: const [Rect.fromLTWH(380, 0, 40, 600)],
+      );
+
+      await tester.pumpWidget(
+        FoldSignalsScope(
+          override: signals,
+          child: const Directionality(
+            textDirection: TextDirection.ltr,
+            child: FoldAwareTwoPane(
+              start: Text('Start Pane'),
+              end: Text('End Pane'),
+            ),
+          ),
+        ),
+      );
+
+      final groups = find.descendant(
+        of: find.byType(FoldAwareTwoPane),
+        matching: find.byType(FocusTraversalGroup),
+      );
+      expect(groups, findsNWidgets(2));
+    });
+
+    testWidgets('isolates focus traversal between start and end panes', (
+      tester,
+    ) async {
+      final signals = FakeFoldSignals(
+        viewSize: const Size(800, 600),
+        activeFolds: const [Rect.fromLTWH(380, 0, 40, 600)],
+      );
+
+      await tester.pumpWidget(
+        FoldSignalsScope(
+          override: signals,
+          child: const Directionality(
+            textDirection: TextDirection.ltr,
+            child: FoldAwareTwoPane(
+              start: Focus(child: Text('Start Focus')),
+              end: Focus(child: Text('End Focus')),
+            ),
+          ),
+        ),
+      );
+
+      final startGroup = tester.widget<FocusTraversalGroup>(
+        find
+            .ancestor(
+              of: find.text('Start Focus'),
+              matching: find.byType(FocusTraversalGroup),
+            )
+            .first,
+      );
+      final endGroup = tester.widget<FocusTraversalGroup>(
+        find
+            .ancestor(
+              of: find.text('End Focus'),
+              matching: find.byType(FocusTraversalGroup),
+            )
+            .first,
+      );
+      expect(startGroup, isNot(same(endGroup)));
+    });
   });
 }

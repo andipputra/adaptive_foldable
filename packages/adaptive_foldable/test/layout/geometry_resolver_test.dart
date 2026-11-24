@@ -25,7 +25,11 @@ NavGeometry _g(
   signals: s,
   viewPadding: pad,
   direction: dir,
+  sideThickness: _side,
 );
+
+/// Explicit side-column width; the library default is 0.
+const double _side = 80;
 
 void main() {
   group('bottom bar', () {
@@ -68,7 +72,7 @@ void main() {
       );
       expect(g.barRect.top, 40);
       expect(g.barRect.right, 678);
-      expect(g.barRect.width, kSideBarThickness);
+      expect(g.barRect.width, _side);
       expect(g.skipRegion, isNotNull);
       expect(g.skipRegion!.bottom, 40);
       expect(g.itemAxis, NavAxis.vertical);
@@ -106,7 +110,7 @@ void main() {
         pad: const NavInsets(top: 24, left: 44),
       );
       expect(g.barRect.top, 24);
-      expect(g.barRect.width, kSideBarThickness + 44);
+      expect(g.barRect.width, _side + 44);
     });
 
     test('logical edges flip with direction, physical edges do not', () {

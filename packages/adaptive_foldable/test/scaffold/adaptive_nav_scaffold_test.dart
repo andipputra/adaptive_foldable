@@ -31,6 +31,7 @@ class _HostState extends State<_Host> {
       builder: (context, child) =>
           FoldSignalsScope(override: widget.signals, child: child!),
       home: AdaptiveNavScaffold(
+        sideBarThickness: 80,
         destinations: _dests,
         selectedIndex: index,
         onSelected: (i) => setState(() => index = i),
@@ -185,6 +186,7 @@ void main() {
   testWidgets('asserts on out-of-range selectedIndex', (tester) async {
     expect(
       () => AdaptiveNavScaffold(
+        sideBarThickness: 80,
         destinations: _dests,
         selectedIndex: 2,
         onSelected: (_) {},
@@ -192,5 +194,36 @@ void main() {
       ),
       throwsAssertionError,
     );
+  });
+
+  testWidgets('onBack interceptor intercepts back button taps', (tester) async {
+    bool intercepted = false;
+    final signals = FakeFoldSignals(viewSize: const Size(400, 800));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = signals.viewSize;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FoldSignalsScope(
+          override: signals,
+          child: AdaptiveNavScaffold(
+            sideBarThickness: 80,
+            destinations: _dests,
+            selectedIndex: 0,
+            onSelected: (_) {},
+            onBack: () => intercepted = true,
+            policy: const MaterialPolicy(),
+            body: const SizedBox(),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Back'), findsOneWidget);
+    await tester.tap(find.text('Back'));
+    await tester.pump();
+
+    expect(intercepted, isTrue);
   });
 }

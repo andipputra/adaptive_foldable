@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
 import 'package:adaptive_foldable/src/fold_kit/fold_aware_dialog.dart';
+import 'package:adaptive_foldable/src/fold_kit/fold_pane_modal.dart';
 import 'package:adaptive_foldable/src/scaffold/actions/nav_pane_scope.dart';
 import 'package:adaptive_foldable/src/signals/fold_signals.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,9 @@ import 'package:flutter/material.dart';
 ///
 /// When an active vertical fold exists (e.g. book pose), anchors the bottom sheet
 /// strictly to the [target] pane half, avoiding the crease entirely.
-/// When flat or without an active fold, behaves as a standard modal bottom sheet.
+/// Inside a [FoldAwareTwoPane] the sheet and its barrier are limited to the
+/// [target] pane, so the other pane stays visible and interactive; close it
+/// with [closeFoldAwareModal]. Otherwise it is a standard modal bottom sheet.
 Future<T?> showFoldAwareModalBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -27,6 +30,28 @@ Future<T?> showFoldAwareModalBottomSheet<T>({
 }) {
   final callerPaneId = NavPaneScope.idOf(context);
   final signals = FoldSignals.of(context);
+
+  final paneOverlay = paneOverlayFor(context, target);
+  if (paneOverlay != null) {
+    return showPaneModal<T>(
+      overlay: paneOverlay,
+      isSheet: true,
+      dismissible: isDismissible,
+      barrierColor: barrierColor ?? Colors.black54,
+      builder: (sheetContext) => _FoldAwareBottomSheetContainer(
+        target: target,
+        callerPaneId: callerPaneId,
+        signals: signals,
+        backgroundColor: backgroundColor,
+        elevation: elevation,
+        shape: shape,
+        clipBehavior: clipBehavior,
+        constraints: constraints,
+        paneScoped: true,
+        child: builder(sheetContext),
+      ),
+    );
+  }
 
   return showModalBottomSheet<T>(
     context: context,
@@ -70,6 +95,7 @@ class _FoldAwareBottomSheetContainer extends StatelessWidget {
     this.shape,
     this.clipBehavior,
     this.constraints,
+    this.paneScoped = false,
     required this.child,
   });
 
@@ -81,6 +107,7 @@ class _FoldAwareBottomSheetContainer extends StatelessWidget {
   final ShapeBorder? shape;
   final Clip? clipBehavior;
   final BoxConstraints? constraints;
+  final bool paneScoped;
   final Widget child;
 
   @override
@@ -112,6 +139,13 @@ class _FoldAwareBottomSheetContainer extends StatelessWidget {
       clipBehavior: effectiveClip,
       child: child,
     );
+
+    if (paneScoped) {
+      return ConstrainedBox(
+        constraints: constraints ?? const BoxConstraints(),
+        child: sheetSurface,
+      );
+    }
 
     if (activeFolds.isEmpty) {
       return Align(

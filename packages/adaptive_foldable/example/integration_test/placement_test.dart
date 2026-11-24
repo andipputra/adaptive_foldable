@@ -35,7 +35,10 @@ void main() {
     }
 
     // Scroll, switch tabs and come back: the offset survives.
-    await tester.drag(find.byType(ListView), const Offset(0, -250));
+    await tester.drag(
+      find.byType(CustomScrollView).first,
+      const Offset(0, -250),
+    );
     await tester.pumpAndSettle();
     final before = tester.getTopLeft(find.textContaining('Message 5').first).dy;
     await tester.tap(find.text('Profile').last);
