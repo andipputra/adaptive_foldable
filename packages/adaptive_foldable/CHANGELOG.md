@@ -1,8 +1,9 @@
-## Unreleased
+## 1.0.2
 
 * Added opt-in `nativeIosBarBuilder` (native `UITabBar` at the bottom, Liquid Glass side column on iPhone Duo) and `NavDestination.sfSymbol`.
 * Added `AdaptiveNavScaffold.actionsAtTop` with `NavTopBar` and `topBarBuilder`: Back, actions and overflow in a top bar, tabs in the bottom bar, like a native app. The top bar is cut around an active fold and the body is inset below it.
 * Added `NavBarStyle` (`padding`, `itemSpacing`, `alignment`, `height`, `respectSafeArea`) through `barStyle` / `topBarStyle`, honoured by the default bars.
+* Updated fold-aware dialogs and bottom sheets so they are scoped to the target pane in visible `FoldAwareTwoPane` layouts. Added `closeFoldAwareModal` for closing pane-scoped dialogs and sheets.
 
 ## 1.0.1
 
