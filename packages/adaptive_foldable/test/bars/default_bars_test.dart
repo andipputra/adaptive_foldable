@@ -3,6 +3,8 @@ import 'dart:ui' show CheckedState, Rect, Tristate;
 
 import 'package:adaptive_foldable/adaptive_foldable.dart';
 import 'package:adaptive_foldable/src/bars/nav_bar_item.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, debugDefaultTargetPlatformOverride;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show DebugSemanticsDumpOrder;
 import 'package:flutter/semantics.dart' show SemanticsNode;
@@ -173,7 +175,7 @@ void main() {
           tester,
           s,
           materialBarBuilder,
-          policy: const MaterialPolicy(),
+          policy: const MaterialPolicy(railOnWide: true),
         );
         expect(find.byType(MaterialNavBar), findsOneWidget);
         final x = tester.getTopLeft(find.text('Home')).dx;
@@ -195,7 +197,7 @@ void main() {
         tester,
         s,
         materialBarBuilder,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
         dir: TextDirection.rtl,
       );
       expect(
@@ -316,7 +318,7 @@ void main() {
         tester,
         s,
         cupertinoBarBuilder,
-        policy: const MaterialPolicy(),
+        policy: const MaterialPolicy(railOnWide: true),
       );
       expect(tester.getTopLeft(find.text('Home')).dx, lessThan(100));
     });
@@ -409,6 +411,43 @@ void accessibilityTests() {
         },
       );
     }
+
+    Future<Size> itemSize(WidgetTester tester, TargetPlatform platform) async {
+      debugDefaultTargetPlatformOverride = platform;
+      await tester.pumpWidget(
+        const Directionality(
+          textDirection: TextDirection.ltr,
+          child: Center(
+            child: UnconstrainedBox(
+              child: NavBarItem(
+                icon: IconData(0xe318),
+                label: 'H',
+                selected: false,
+                onTap: null,
+                activeColor: Color(0xFF000000),
+                inactiveColor: Color(0xFF777777),
+              ),
+            ),
+          ),
+        ),
+      );
+      final size = tester.getSize(find.byType(NavBarItem));
+      debugDefaultTargetPlatformOverride = null;
+      return size;
+    }
+
+    testWidgets('Android items have a 48x48 minimum target', (tester) async {
+      final size = await itemSize(tester, TargetPlatform.android);
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
+    });
+
+    testWidgets('iOS items keep the 44x44 minimum target', (tester) async {
+      final size = await itemSize(tester, TargetPlatform.iOS);
+      expect(size.width, greaterThanOrEqualTo(44));
+      expect(size.width, lessThan(48));
+      expect(size.height, greaterThanOrEqualTo(44));
+    });
 
     testWidgets('every item has a 44x44 minimum target', (tester) async {
       await tester.pumpWidget(

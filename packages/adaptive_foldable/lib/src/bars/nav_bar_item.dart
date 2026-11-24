@@ -1,8 +1,19 @@
 import 'package:adaptive_foldable/src/bars/bar_strings.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/widgets.dart';
 
-/// Smallest tap target in logical pixels.
+/// Smallest tap target in logical pixels on iOS and other non-Android platforms.
 const double kMinTapTarget = 44;
+
+/// Smallest tap target in logical pixels on Android (Material 48 dp guideline).
+const double kMinTapTargetAndroid = 48;
+
+/// Smallest tap target in logical pixels for the current platform.
+double get platformMinTapTarget =>
+    defaultTargetPlatform == TargetPlatform.android
+    ? kMinTapTargetAndroid
+    : kMinTapTarget;
 
 /// Colour used for destructive actions and badges when the caller gives none.
 const Color kDestructiveColor = Color(0xFFB3261E);
@@ -10,7 +21,7 @@ const Color kDestructiveColor = Color(0xFFB3261E);
 /// One tappable icon-and-label entry shared by the default bars.
 ///
 /// Draws the icon, label and optional badge with a tap target of at least
-/// [kMinTapTarget] on both axes, one merged semantics node whose label doubles
+/// [platformMinTapTarget] on both axes, one merged semantics node whose label doubles
 /// as the tooltip, and keyboard focus with a visible highlight.
 class NavBarItem extends StatefulWidget {
   /// Creates an item.
@@ -148,9 +159,9 @@ class _NavBarItemState extends State<NavBarItem> {
                   : null,
             ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minWidth: kMinTapTarget,
-                minHeight: kMinTapTarget,
+              constraints: BoxConstraints(
+                minWidth: platformMinTapTarget,
+                minHeight: platformMinTapTarget,
               ),
               child: Center(
                 child: Column(

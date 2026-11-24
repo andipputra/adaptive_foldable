@@ -149,7 +149,7 @@ AdaptiveNavScaffold(
 ```
 
 - `ApplePolicy` (default on iOS/macOS): Prefers hardware-aligned trailing columns on iPhone Duo and bottom bars on standard phones.
-- `MaterialPolicy` (default on Android/Linux/Windows): Uses bottom bars on compact widths and leading navigation rails on expanded widths.
+- `MaterialPolicy` (default on Android/Linux/Windows): Keeps the bottom bar at every width and posture. Pass `MaterialPolicy(railOnWide: true)` for a leading navigation rail from 600 dp and in book posture.
 
 ### Custom Policies
 
@@ -246,3 +246,41 @@ AdaptiveNavScaffold(
 - Dart: `^3.13.0`
 - iOS deployment target: `15.0+`
 - Xcode: `27.1+` for iPhone Duo simulator and native bridge headers
+
+## Android foldables
+
+Android reports the hinge through Flutter's display features, so no native code is needed. The default `MaterialPolicy` keeps a bottom bar in every posture.
+
+| Posture | Bar | Content |
+| --- | --- | --- |
+| Flat or closed | bottom, full width | one pane |
+| Book (vertical hinge) | bottom, on the larger pane only; equal panes pick the leading side | `FoldAwareTwoPane` splits on the hinge |
+| Tabletop (horizontal hinge) | bottom, below the hinge | content above, controls below (recipe below) |
+
+Tap targets are 48 dp on Android. Use `MaterialWindowSize.fromSize(MediaQuery.sizeOf(context))` for Material compact, medium and expanded classes of the window, including split-screen.
+
+### Tabletop recipe
+
+```dart
+FoldBuilder(
+  builder: (context, signals) {
+    final hinge = signals.activeFolds
+        .where((r) => r.width > r.height)
+        .firstOrNull;
+    if (hinge == null) return const FullScreenPlayer();
+    return Column(
+      children: [
+        SizedBox(height: hinge.top, child: const VideoSurface()),
+        SizedBox(height: hinge.height),
+        const Expanded(child: PlaybackControls()),
+      ],
+    );
+  },
+)
+```
+
+### Manifest and app-owned behaviour
+
+Keep `android:configChanges` for `screenSize|smallestScreenSize|screenLayout|orientation|density` so folding does not restart the activity, and do not set a fixed `screenOrientation`. Picture-in-picture, camera preview, media projection and multi-instance windows belong to the app, not this package.
+
+Google reference: [Foldables](https://developer.android.com/docs/quality-guidelines/adaptive-app-quality/experiences/foldables), [Tier 2](https://developer.android.com/docs/quality-guidelines/adaptive-app-quality/tier-2), [Tier 3](https://developer.android.com/docs/quality-guidelines/adaptive-app-quality/tier-3).

@@ -15,7 +15,8 @@ FoldSignalsSnapshot _s(
 );
 
 void main() {
-  const policy = MaterialPolicy();
+  const policy = MaterialPolicy(railOnWide: true);
+  const bottomPolicy = MaterialPolicy();
 
   final widthCases = <(double, NavEdge, String)>[
     (360, NavEdge.bottom, MaterialPolicy.ruleCompact),
@@ -76,6 +77,35 @@ void main() {
     expect(MaterialPolicy.ruleCompact, 'material.compact');
     expect(MaterialPolicy.ruleMedium, 'material.medium');
     expect(MaterialPolicy.ruleExpanded, 'material.expanded');
+  });
+
+  test('default policy keeps the bottom bar at every width and posture', () {
+    for (final w in [360.0, 600.0, 839.0, 840.0, 1280.0]) {
+      for (final dir in TextDirection.values) {
+        expect(bottomPolicy.resolve(_s(w), dir).edge, NavEdge.bottom);
+      }
+    }
+    final book = bottomPolicy.resolve(
+      _s(
+        900,
+        posture: Posture.partiallyOpen,
+        folds: const [Rect.fromLTWH(445, 0, 10, 900)],
+      ),
+      TextDirection.ltr,
+    );
+    expect(book.edge, NavEdge.bottom);
+    expect(book.ruleId, MaterialPolicy.ruleBook);
+  });
+
+  test('default policy keeps rule ids by width', () {
+    expect(
+      bottomPolicy.resolve(_s(700), TextDirection.ltr).ruleId,
+      MaterialPolicy.ruleMedium,
+    );
+    expect(
+      bottomPolicy.resolve(_s(1000), TextDirection.ltr).ruleId,
+      MaterialPolicy.ruleExpanded,
+    );
   });
 
   test('never returns a physical edge', () {

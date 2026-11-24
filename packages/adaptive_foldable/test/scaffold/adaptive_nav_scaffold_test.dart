@@ -173,7 +173,11 @@ void main() {
     tester,
   ) async {
     final signals = FakeFoldSignals(viewSize: const Size(500, 800));
-    await _pump(tester, signals, policy: const MaterialPolicy());
+    await _pump(
+      tester,
+      signals,
+      policy: const MaterialPolicy(railOnWide: true),
+    );
     final host = tester.state<_HostState>(find.byType(_Host));
     await tester.enterText(find.byType(TextField), 'keep');
     expect(tester.getTopLeft(find.text('Home')).dy, greaterThan(700));
@@ -182,6 +186,52 @@ void main() {
     expect(tester.getTopLeft(find.text('Home')).dx, lessThan(100));
     expect(host.text.text, 'keep');
   });
+
+  testWidgets(
+    'default MaterialPolicy keeps tab, scroll and text through resize, '
+    'fold into book, rotate and unfold',
+    (tester) async {
+      final signals = FakeFoldSignals(
+        viewSize: const Size(840, 800),
+        isAvailable: true,
+      );
+      await _pump(tester, signals, policy: const MaterialPolicy());
+      final host = tester.state<_HostState>(find.byType(_Host));
+      await tester.tap(find.text('Inbox'));
+      await tester.enterText(find.byType(TextField), 'draft');
+      host.controller.jumpTo(300);
+      await tester.pump();
+
+      Future<void> step(Size size, {List<Rect> folds = const []}) async {
+        tester.view.physicalSize = size;
+        signals.update(
+          viewSize: size,
+          activeFolds: folds,
+          posture: folds.isEmpty ? Posture.fullyOpen : Posture.partiallyOpen,
+        );
+        await tester.pump();
+        expect(host.index, 1);
+        expect(host.text.text, 'draft');
+        expect(host.controller.offset, 300);
+        expect(
+          tester.getTopLeft(find.text('Home')).dy,
+          greaterThan(size.height - 120),
+        );
+      }
+
+      await step(const Size(420, 800));
+      await step(
+        const Size(840, 800),
+        folds: const [Rect.fromLTWH(400, 0, 40, 800)],
+      );
+      await step(const Size(800, 840));
+      await step(
+        const Size(800, 840),
+        folds: const [Rect.fromLTWH(0, 400, 800, 40)],
+      );
+      await step(const Size(840, 800));
+    },
+  );
 
   testWidgets('asserts on out-of-range selectedIndex', (tester) async {
     expect(
@@ -213,7 +263,7 @@ void main() {
             selectedIndex: 0,
             onSelected: (_) {},
             onBack: () => intercepted = true,
-            policy: const MaterialPolicy(),
+            policy: const MaterialPolicy(railOnWide: true),
             body: const SizedBox(),
           ),
         ),

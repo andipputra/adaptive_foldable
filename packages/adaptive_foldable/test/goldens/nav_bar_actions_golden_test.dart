@@ -60,13 +60,13 @@ void main() {
       'android_compact',
       FoldSignalsPresets.androidCompact,
       materialBarBuilder,
-      const MaterialPolicy(),
+      const MaterialPolicy(railOnWide: true),
     ),
     (
       'android_medium',
       FoldSignalsPresets.androidMedium,
       materialBarBuilder,
-      const MaterialPolicy(),
+      const MaterialPolicy(railOnWide: true),
     ),
   ];
 

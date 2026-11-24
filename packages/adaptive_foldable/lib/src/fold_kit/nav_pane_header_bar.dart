@@ -1,4 +1,6 @@
 // ignore_for_file: deprecated_member_use -- material.dart is deprecated from Flutter 3.50 but still required for the 3.47 floor.
+import 'package:adaptive_foldable/src/bars/nav_bar_item.dart'
+    show platformMinTapTarget;
 import 'package:adaptive_foldable/src/model/nav_action.dart';
 import 'package:adaptive_foldable/src/model/page_actions.dart';
 import 'package:adaptive_foldable/src/scaffold/actions/nav_action_registry.dart';
@@ -105,7 +107,10 @@ class _NavPaneActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+      constraints: BoxConstraints(
+        minWidth: platformMinTapTarget,
+        minHeight: platformMinTapTarget,
+      ),
       child: IconButton(
         icon: Icon(action.icon),
         tooltip: action.label,

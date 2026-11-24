@@ -13,6 +13,8 @@ void main() {
   ) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Default'));
+    await tester.pumpAndSettle();
 
     // Verify main screen rendered with debug overlay
     expect(find.textContaining("Message 0"), findsOneWidget);

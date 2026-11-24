@@ -13,6 +13,8 @@ void main() {
   ) async {
     await tester.pumpWidget(const MyApp());
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Default'));
+    await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(InboxPage));
     final signals = FoldSignals.of(context);

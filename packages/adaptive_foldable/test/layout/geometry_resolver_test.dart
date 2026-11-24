@@ -195,6 +195,52 @@ void main() {
     });
   });
 
+  group('book posture: bottom bar stays on the larger pane', () {
+    const hinge = 10.0;
+    NavGeometry bookBar(double foldLeft, TextDirection dir) => _g(
+      NavEdge.bottom,
+      _s(
+        const Size(1000, 600),
+        folds: [Rect.fromLTWH(foldLeft, 0, hinge, 600)],
+      ),
+      dir: dir,
+    );
+
+    test('larger left pane keeps the bar left of the hinge', () {
+      final g = bookBar(600, TextDirection.ltr);
+      expect(g.barRect.left, 0);
+      expect(g.barRect.right, 600 - kFoldClearance);
+    });
+
+    test('larger right pane keeps the bar right of the hinge', () {
+      final g = bookBar(300, TextDirection.ltr);
+      expect(g.barRect.left, 300 + hinge + kFoldClearance);
+      expect(g.barRect.right, 1000);
+    });
+
+    test('equal panes pick the leading side', () {
+      final ltr = bookBar(495, TextDirection.ltr);
+      expect(ltr.barRect.right, 495 - kFoldClearance);
+      final rtl = bookBar(495, TextDirection.rtl);
+      expect(rtl.barRect.left, 495 + hinge + kFoldClearance);
+      expect(rtl.barRect.right, 1000);
+    });
+
+    test('the bar never straddles the hinge', () {
+      for (final left in [100.0, 495.0, 700.0]) {
+        for (final dir in TextDirection.values) {
+          final g = bookBar(left, dir);
+          final hingeRect = Rect.fromLTWH(left, 0, hinge, 600);
+          expect(g.barRect.overlaps(hingeRect), isFalse);
+          expect(
+            g.barRect.left < left && g.barRect.right > left + hinge,
+            isFalse,
+          );
+        }
+      }
+    });
+  });
+
   test('fold overlap property holds for 1000 generated cases', () {
     final rnd = math.Random(42);
     const size = Size(900, 700);
